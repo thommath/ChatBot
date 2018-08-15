@@ -2,7 +2,10 @@ var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
+var shortId = require('shortid');
+
 var { Dialogflow } = require('./dialogflow');
+const { RegStat } = require('./RegStat');
 
 var { intentToAction } = require('./intentToAction');
 
@@ -11,9 +14,13 @@ app.get('/', function(req, res){
 });
 
 io.on('connection', function(socket){
-    const id = 'UserId';
+    const id = shortId.generate();
     const df = new Dialogflow();
     console.log('a user connected');
+    const rs = new RegStat(id);
+    
+    socket.emit('chat message', 'Hi');
+    
     
     socket.on('disconnect', function(){
       console.log('user disconnected');
@@ -23,7 +30,7 @@ io.on('connection', function(socket){
         console.log('message: ' + msg);
 
         df.detectIntent(msg, id).then(intent => {
-            const response = intentToAction(intent);
+            const response = intentToAction(intent, rs);
             if (response.then) {
                 response.then(answer => socket.emit('chat message', answer));
             } else {
