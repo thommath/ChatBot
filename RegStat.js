@@ -15,8 +15,8 @@ class RegStat {
         return `Before you do that, plase login here: ${this.url}/oauth/?client_id=${this.client_id}&session_id=${this.sessionId}`;
     }
 
-    welcome() {
-        return 'Welcome to Regstat!';
+    defaultWelcomeIntent() {
+        return 'Hey I\'m Tony, what can I help you with?';
     }
 
     getCategories() {
@@ -47,6 +47,14 @@ class RegStat {
             headers: { Authorization: this.bearer },
             json: true,
         });
+    }
+
+    rephrase() {
+        return `I'm sorry but I'm not sure what that means, can you rephrase it please?`;
+    }
+
+    phraseLearned() {
+        return `Thank you, I'll remember that!`;
     }
 
 }

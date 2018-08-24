@@ -29,15 +29,29 @@ io.on('connection', function(socket){
     socket.on('chat message', function(msg){
         console.log('message: ' + msg);
 
-        df.detectIntent(msg, id).then(intent => {
-            const response = intentToAction(intent, rs);
-            if (response.then) {
-                response.then(answer => socket.emit('chat message', answer));
-            } else {
-                socket.emit('chat message', response);
+        df.detectIntent(msg, id).then(obj => {
+            const { intent, extra } = obj;
+
+            if (extra) {
+                const response = intentToAction(extra, rs);
+                
+                if (response.then) {
+                    response.then(answer => socket.emit('chat message', answer));
+                } else {
+                    socket.emit('chat message', response);
+                }
+            }
+
+            if (intent) {
+                const response = intentToAction(intent, rs);
+                
+                if (response.then) {
+                    response.then(answer => socket.emit('chat message', answer));
+                } else {
+                    socket.emit('chat message', response);
+                }
             }
         });
-
     });
 });
 
