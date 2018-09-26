@@ -1,5 +1,6 @@
 const request = require('request-promise-native');
 const sha256 = require('sha256');
+const parse_reduce = require('./parse_reduce');
 
 class RegStat {
     constructor(sessionId) {
@@ -38,6 +39,18 @@ class RegStat {
         return this.callApi('transaction')
             .then((data) => 
                 `The latest transaction you have is ${data.transaction_list[0].description}`
+            );
+    }
+
+    reduceTransactions({reduce}) {
+        console.log(this)
+        if (!this.bearer) {
+            return this.authenticate();
+        }
+
+        return this.callApi('transaction')
+            .then(data =>
+                data.transaction_list.reduce(parse_reduce.get_reduce_function(reduce.stringValue, {}), 0)
             );
     }
 

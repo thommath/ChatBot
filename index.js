@@ -30,10 +30,10 @@ io.on('connection', function(socket){
         console.log('message: ' + msg);
 
         df.detectIntent(msg, id).then(obj => {
-            const { intent, extra } = obj;
+            const { intent, extra, parameters } = obj;
 
             if (extra) {
-                const response = intentToAction(extra, rs);
+                const response = intentToAction(extra, rs, parameters);
                 
                 if (response.then) {
                     response.then(answer => socket.emit('chat message', answer));
@@ -43,7 +43,7 @@ io.on('connection', function(socket){
             }
 
             if (intent) {
-                const response = intentToAction(intent, rs);
+                const response = intentToAction(intent, rs, parameters);
                 
                 if (response.then) {
                     response.then(answer => socket.emit('chat message', answer));

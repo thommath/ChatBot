@@ -52,7 +52,7 @@ class Dialogflow {
                         return { extra: 'Phrase Learned', intent: result.intent.displayName };
                     }
 
-                    return { intent: result.intent.displayName };
+                    return { intent: result.intent.displayName, parameters: result.parameters.fields };
                 } else {
                     console.log(`  No intent matched.`);
                     this.unknownPhrase = msg;
