@@ -3,7 +3,7 @@ var expect = require('chai').expect
   , foo = 'bar'
   , beverages = { tea: [ 'chai', 'matcha', 'oolong' ] };
 
-const { operator, something, compare, func, condition } = require('../parse_reduce');
+const { operator, something, compare, func, condition, magiduse } = require('../parse_reduce');
 
 
   describe('operator', () => {
@@ -21,6 +21,10 @@ const { operator, something, compare, func, condition } = require('../parse_redu
         expect(func(1, 2)).to.equal(0.5);
         expect(func(2, 6)).to.equal(2/6);
     });
+    it('should merge lists', () => {
+        let func = operator('+');
+        expect(func([1, 2], [3, 4]).length).to.equal(4);
+    })
 })
 describe('compare', () => {
     it('should reurn a function with two parameters that compares them', () => {
@@ -56,6 +60,15 @@ describe('something', () => {
         let func = something('i + 2 / 2 - 1', {i: 2});
         expect(func()).to.equal(2);
     });
+    it('should return a list', () => {
+        let func = something('i + i', {i: [2]});
+        expect(func().length).to.equal(2);
+    })
+    it('should return a list', () => {
+        let func = something('[i] + [i]', {i: 2});
+        expect(func().length).to.equal(2);
+        expect(func()[0]).to.equal(2);
+    })
 });
 describe('condition', () => {
     it('should return something', () => {
@@ -84,4 +97,11 @@ describe('func', () => {
         f = func('2 if 2 > 1 else 3');
         expect(f()).to.equal(2);
     });
+});
+
+describe('magiduse', () => {
+    it('should reduce a list based on input string with default value', () => {
+        let ret = magiduse([{i: [2]}], 'acc + i default list', {});
+        expect(ret[0]).to.equal(2)
+    })
 })

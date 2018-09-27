@@ -12,9 +12,13 @@ func := <something> | <something> if <condition> else <something>
 condition := <something> | <something> <comp> <something> | <condition> <condition_merger> <condition>
 condition_merger := || | &&
 
-something := property-of-elem | number | <var> | <something> <op> <something>
+something := <list> | property-of-elem | number | <var> | <something> <op> <something>
+
+list := [] | [<listItem>]
+listItem := <something> | <something>, <something>
+
 comp := < | > | <= | => | == | !=
-op := + | - | * | /
+op := + | - | * | / | ++
 var := i | cur | acc | all.length
 
 

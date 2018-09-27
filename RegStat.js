@@ -50,7 +50,7 @@ class RegStat {
 
         return this.callApi('transaction')
             .then(data =>
-                data.transaction_list.reduce(parse_reduce.get_reduce_function(reduce.stringValue, {}), 0)
+                parse_reduce.magiduse(data.transaction_list, reduce.stringValue, {})
             );
     }
 

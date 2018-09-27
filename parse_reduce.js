@@ -1,4 +1,21 @@
 
+const magiduse = (list, s, vars) => {
+    let defaultIndex = s.indexOf('default');
+
+    let def = 0;
+    if (defaultIndex !== -1) {
+        switch(s.slice(defaultIndex + 7 + 1)){
+            case 'list': def = [];break;
+            case 'int': def = 0;break;
+            case 'number': def = 0;break;
+            case 'string': def = '';break;
+            default: def = something(s, vars)();
+        }
+        return list.reduce(func(s.slice(0, defaultIndex-1), vars), def);
+    }
+    return list.reduce(func(s, vars), def);
+}
+
 const func = (s, vars) => {
     let ifIndex = s.indexOf('if');
 
@@ -51,6 +68,13 @@ const findCompareItem = s => {
 
 
 const something = (s, vars) => {
+
+    // is list?
+    const isList = s[0] == '[' && s.indexOf(']') === s.length - 1;
+    if (isList) {
+        return (acc, elem, i, all) => s.slice(1, s.length-1).split(', ').map(e => something(e, vars)(acc, elem, i, all));
+    }
+
     const splitted = s.split(' ');
     if (splitted.length == 1) {
         if (!isNaN(Number(s))) {
@@ -106,11 +130,16 @@ const compare = s => {
 }
 
 const operator_prioritized = s => s == '*' || s == '/';
-const operator_not_prioritized = s => s == '+' || s == '-';
+const operator_not_prioritized = s => s == '+' || s == '-' | '++';
 
 const operator = s => {
     switch(s){
-        case '+': return (a, b) => a + b;
+        case '+': return (a, b) => {
+            if (Array.isArray(a)) {
+                return a.concat(b);
+            }
+            return a + b;
+        };
         case '-': return (a, b) => a - b;
         case '*': return (a, b) => a * b;
         case '/': return (a, b) => a / b;
@@ -124,5 +153,6 @@ exports.operator = operator;
 exports.something = something;
 exports.func = func;
 exports.condition = condition;
+exports.magiduse = magiduse;
 exports.get_reduce_function = (s, vars) => func(s, vars);
 
