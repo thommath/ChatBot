@@ -57,17 +57,21 @@ describe('something', () => {
         expect(func()).to.equal('hello');
     });
     it('should calculate an simple expression', () => {
-        let func = something('i + 2 / 2 - 1', {i: 2});
+        let func = something('i+2/2-1', {i: 2});
         expect(func()).to.equal(2);
     });
     it('should return a list', () => {
-        let func = something('i + i', {i: [2]});
+        let func = something('i+i', {i: [2]});
         expect(func().length).to.equal(2);
     })
-    it('should return a list', () => {
-        let func = something('[i] + [i]', {i: 2});
+    it('should parse and add lists', () => {
+        let func = something('[i]+[i]', {i: 2});
         expect(func().length).to.equal(2);
         expect(func()[0]).to.equal(2);
+    })
+    it('should work with or without spaces', () => {
+        let func = something('i   +i', {i: 2});
+        expect(func()).to.equal(4);
     })
 });
 describe('condition', () => {
@@ -97,6 +101,12 @@ describe('func', () => {
         f = func('2 if 2 > 1 else 3');
         expect(f()).to.equal(2);
     });
+    it('should use acc as default else', () => {
+        let f = func('2 if 2 < 1');
+        expect(f(3)).to.equal(3);
+        f = func('2 if 2 > 1');
+        expect(f(3)).to.equal(2);
+    })
 });
 
 describe('magiduse', () => {
