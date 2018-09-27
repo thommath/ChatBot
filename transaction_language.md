@@ -7,8 +7,11 @@ get transactions after {start_date} in {category} and reduce transaction total p
 
 
 S := <func>
-func := <something> | <something> <condition>
-condition := if <something> <comp> <something> else <something>
+func := <something> | <something> if <condition> else <something>
+
+condition := <something> | <something> <comp> <something> | <condition> <condition_merger> <condition>
+condition_merger := || | &&
+
 something := property-of-elem | number | <var> | <something> <op> <something>
 comp := < | > | <= | => | == | !=
 op := + | - | * | /
