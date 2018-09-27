@@ -131,5 +131,9 @@ describe('magiduse', () => {
     it('should reduce a list based on input string with default value', () => {
         let ret = magiduse([{i: [2]}], 'acc + i default list', {});
         expect(ret[0]).to.equal(2)
+    });
+    it('should replace aliases', () => {
+        let ret = magiduse([{i: [2]}], 'sum i from array', {});
+        expect(ret[0]).to.equal(2)
     })
 })

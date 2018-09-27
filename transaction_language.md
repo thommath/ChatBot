@@ -21,8 +21,10 @@ comp := < | > | <= | => | == | !=
 op := + | - | * | / | ++
 var := i | cur | acc | all.length
 
-
-
+# Todo
+Add syntax for filter to get correct length
+nest reduce? 
+Add categories as possible input list
 
 
 filter:

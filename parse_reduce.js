@@ -1,5 +1,51 @@
 
+
+
+const aliases = {
+    'sum': 'acc+',
+    'average': 'avg',
+    'avg': 'acc + total / length',
+
+    'array': 'list',
+    'integer': 'int',
+    'number': 'int',
+    'text': 'string',
+    'from': 'default',
+    'starting at': 'default',
+    'starting with': 'default',
+    
+    'times': '*',
+    'mult': '*',
+    'multiply': '*',
+    
+    'subtract': '-',
+    'sub': '-',
+    
+    'add': '+',
+    'divide': '/',
+    'div': '/',
+    'division': '/',
+
+    'where': 'if',
+    
+    '\\&\\&': 'and',
+    '\\|\\|': 'or',
+}
+
+function replaceAll(str, find, replace) {
+    return str.replace(new RegExp(find, 'g'), replace);
+}
+const preprocess = s => {
+    const keys = Object.keys(aliases);
+    for (let i in keys) {
+        s = replaceAll(s, keys[i], aliases[keys[i]])
+    }
+    return s;
+}
+
 const magiduse = (list, s, vars) => {
+    s = preprocess(s);
+
     let defaultIndex = s.indexOf('default');
 
     let def = 0;
@@ -7,7 +53,6 @@ const magiduse = (list, s, vars) => {
         switch(s.slice(defaultIndex + 7 + 1)){
             case 'list': def = [];break;
             case 'int': def = 0;break;
-            case 'number': def = 0;break;
             case 'string': def = '';break;
             default: def = something(s, vars)();
         }
@@ -76,8 +121,6 @@ const condition = (s, vars) => {
     if (compareItem) {
         let compareItemIndex = s.indexOf(compareItem);
 
-//        console.log(compareItem, s.slice(0, compareItemIndex-1), s.slice(compareItemIndex + compareItem.length + 1))
-
         return (acc, elem, i, all) => compare(compareItem)
             (
                 something(s.slice(0, compareItemIndex-1), vars)(acc, elem, i, all),
@@ -133,11 +176,12 @@ const something = (s, vars) => {
             );
     }
 
-
     if (!isNaN(Number(s))) {
         return () => Number(s);
     } else if(s == 'acc') {
         return (acc, elem) => acc;
+    } else if(s == 'cur') {
+        return (acc, elem) => elem;
     } else if (vars && vars[s]) {
         return () => vars[s];
     } else if (s == 'length') {
@@ -154,8 +198,6 @@ const something = (s, vars) => {
             return s;
         }
     }
-    
-
 }
 
 const compare = s => {
@@ -188,7 +230,6 @@ const operator = s => {
     }
 }
 
-
 exports.compare = compare;
 exports.operator = operator;
 exports.something = something;
@@ -196,4 +237,3 @@ exports.func = func;
 exports.condition = condition;
 exports.magiduse = magiduse;
 exports.get_reduce_function = (s, vars) => func(s, vars);
-
