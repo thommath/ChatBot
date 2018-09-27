@@ -12,7 +12,7 @@ func := <something> | <something> if <condition> else <something>
 condition := <something> | <something> <comp> <something> | <condition> <condition_merger> <condition>
 condition_merger := || | &&
 
-something := <list> | property-of-elem | number | <var> | <something> <op> <something>
+something := <list> | property-of-elem | number | <var> | <something> <op> <something> | <func>
 
 list := [] | [<listItem>]
 listItem := <something> | <something>, <something>

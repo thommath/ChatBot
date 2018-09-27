@@ -16,14 +16,33 @@ const magiduse = (list, s, vars) => {
     return list.reduce(func(s, vars), def);
 }
 
+const findCorrespondingElse = s => {
+    let ifs = 0;
+    let index = 0;
+    let splitted = s.split(' ')
+    for (let i in splitted){
+        let str = splitted[i];
+        if (str == 'if') {
+            ifs += 1;
+        } else if (str == 'else') {
+            ifs -= 1;
+            if (ifs <= 0) {
+                return index;
+            }
+        }
+        index += str.length + 1;
+    }
+    return -1;
+}
+
 const func = (s, vars) => {
+    s = cleanString(s);
     let ifIndex = s.indexOf('if');
 
     if (ifIndex === -1) {
         return something(s, vars);
     }
-
-    let elseIndex = s.indexOf('else');
+    let elseIndex = findCorrespondingElse(s);
 
     return (acc, elem, i, all) => {
         // Default is return acc
@@ -75,16 +94,24 @@ const findCompareItem = s => {
 }
 
 
-const something = (s, vars) => {
-
+const cleanString = s => {
     // Remove spaces first and last
     if (s[0] == ' ') {
-        return something(s.slice(1), vars);
+        return cleanString(s.slice(1));
     }
     if (s[s.length-1] == ' ') {
-        return something(s.slice(0, s.length-1), vars);
+        return cleanString(s.slice(0, s.length-1));
     }
+    return s;
+}
 
+const something = (s, vars) => {
+    s = cleanString(s);
+
+    // If condition 
+    if (s.indexOf('if') !== -1) {
+        return func(s, vars);
+    }
 
     // is list?
     const isList = s[0] == '[' && s.indexOf(']') === s.length -1;

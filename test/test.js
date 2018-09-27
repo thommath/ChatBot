@@ -72,6 +72,24 @@ describe('something', () => {
     it('should work with or without spaces', () => {
         let func = something('i   +i', {i: 2});
         expect(func()).to.equal(4);
+    });
+    it('should check for if and handle it', () => {
+        let func = something('1 if 1 else 0');
+        expect(func()).to.equal(1);
+    })
+    it('should check for serialized if and handle it', () => {
+        let func = something('1 if 0 else 0 if 0 else 2');
+        expect(func()).to.equal(2);
+        func = something('1 if 0 else 0 if 1 else 2');
+        expect(func()).to.equal(0);
+    })
+    it('should check for nested if and handle it', () => {
+        let func = something('1 if 0 if 1 else 1 else 0 if 0 else 2');
+        expect(func()).to.equal(2);
+        func = something('1 if 1 if 0 else 0 else 0 if 1 else 2');
+        expect(func()).to.equal(0);
+        func = something('1 if 1 if 1+0 else 0 else 0 if 1 else 2');
+        expect(func()).to.equal(1);
     })
 });
 describe('condition', () => {
