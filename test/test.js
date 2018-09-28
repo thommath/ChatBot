@@ -100,16 +100,24 @@ describe('expression', () => {
         expect(func(0, {total: 15})).to.equal(15);
     })
     it('should run functions', () => {
-        let func = expression('print', {print:() => 'hey'});
+        let func = expression('print parameter', {print:() => 'hey'});
         expect(func()).to.equal('hey');
     })
     it('should run functions with arguments', () => {
-        let func = expression('print parameter Thomas', {print:(e) => 'hey ' + e});
+        let func = expression('printParam parameter Thomas', {printParam:(e) => 'hey ' + e});
         expect(func()).to.equal('hey Thomas');
     })
     it('should run functions with arguments', () => {
         let func = expression('welcome parameter Thomas parameter Carl', {welcome:(a, b) => `Welcome ${a} and ${b}`});
         expect(func()).to.equal('Welcome Thomas and Carl');
+    })
+    it('should run functions with arguments', () => {
+        let func = expression('welcome parameter Thomas parameter Carl', {welcome:(a, b) => `Welcome ${a} and ${b}`});
+        expect(func()).to.equal('Welcome Thomas and Carl');
+    })
+    it('should run map on list from vars with function from vars', () => {
+        let func = expression('reduce . list parameter welcome parameter 1', {list: [1, 2, 3], welcome: (a, b) => a + b});
+        expect(func()).to.equal(7);
     })
 });
 describe('condition', () => {

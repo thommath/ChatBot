@@ -12,7 +12,7 @@ func := <expression> | <expression> if <condition> else <expression>
 condition := <expression> | <expression> <comp> <expression> | <condition> <condition_merger> <condition>
 condition_merger := || | &&
 
-expression := <list> | property-of-elem | number | <var> | <expression> <op> <expression> | <somthing> if <condition> else <expression>
+expression := <list> | property-of-elem | number | <var> | <function> <expression> | <expression> <op> <expression> | <somthing> if <condition> else <expression>
 
 list := [] | [<listItem>]
 listItem := <expression> | <expression>, <expression>

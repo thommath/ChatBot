@@ -117,16 +117,20 @@ const isVar = (s, vars) => {
     if (!vars)
         return false;
     let splitted = s.split(' ')
-    return vars[s] || vars[splitted[0]]
+    return vars[s]
 }
 const parseVar = (s, vars) => {
     let splitted = s.split(' ')
-    console.log(s)
+    console.log('parsevar: ', s)
     if (vars[s]) {
-        if (typeof(vars[s]) == 'function')
-            return vars[s];
+        if (typeof(vars[s]) == 'function'){
+
+            console.log('Running fucntion:', vars[s].apply(undefined, ['meme', 'other']))
+            return () => vars[s];
+        }
         return () => vars[s];
     }
+    return vars[s];
     if (typeof(vars[splitted[0]]) == 'function') {
         // format:
         // reduce of transactions parameter <expression> (parameter <expression>)
@@ -140,8 +144,37 @@ const parseVar = (s, vars) => {
     }
 }
 
-const isFunc = s => s[0] === '!';
-const getFunc = (s, vars) => (acc, elem, i, all) => !splitAndRun(condition, s, vars, 1)(acc, elem, i, all);
+const isFunc = s => s[0] === '!' || s.indexOf('parameter') > 0;
+const getFunc = (s, vars) => {
+    if (s[0] == '!')
+        return (acc, elem, i, all) => !splitAndRun(condition, s, vars, 1)(acc, elem, i, all);
+    return (acc, elem, i, all) => {
+        console.log(s);
+
+        // Get context 
+        let context = undefined;
+        if (s.indexOf('.') !== -1) {
+            context = splitAndRun(expression, s, vars, s.indexOf('.')+1, s.indexOf('parameter'))(acc, elem, i, all);
+        }
+
+        // Get params
+        let params = s.slice(s.indexOf('parameter')).split('parameter').slice(1).map(str => {
+            console.log('String:', str)
+            let parsed = splitAndRun(expression, str, vars);
+                return parsed(acc, elem, i, all);
+        });
+        console.log(params);
+        console.log(typeof(splitAndRun(expression, s, vars, 0, s.indexOf('parameter'))))
+
+
+        console.log('applying ', splitAndRun(expression, s, vars, 0, s.indexOf('parameter'))(acc, elem, i, all), 'on', context, 'with', params)
+
+        return splitAndRun(expression, s, vars, 0, s.indexOf('parameter'))(acc, elem, i, all).apply(
+            context,
+            params
+        )
+    }
+}
 
 const isIf = s => s.indexOf('if') !== -1;
 const findCorrespondingElse = s => {
@@ -254,7 +287,7 @@ const parseOperator = (s, vars) => {
     // Apply the operator found on both sides of the expression
     return (acc, elem, i, all) => operator(s[index])
         (   
-            splitAndRun(expression, s, vars, 0, index) (acc, elem, i, all), 
+            splitAndRun(expression, s, vars, 0, index) (acc, elem, i, all),
             splitAndRun(expression, s, vars, index+1) (acc, elem, i, all)
         );
 }
