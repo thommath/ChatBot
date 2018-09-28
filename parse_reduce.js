@@ -93,6 +93,8 @@ const expression = (s, vars) => {
         return parseList(s, vars)
     if (isFunc(s))
         return getFunc(s, vars);
+    if (findCompareItem(s) !== undefined)
+        return condition(s, vars);
     if (isOperator(s))
         return parseOperator(s, vars);
     if (!isNaN(Number(s)))
@@ -116,7 +118,6 @@ const expression = (s, vars) => {
 const isVar = (s, vars) => {
     if (!vars)
         return false;
-    let splitted = s.split(' ')
     return vars[s]
 }
 const parseVar = (s, vars) => {
@@ -131,17 +132,6 @@ const parseVar = (s, vars) => {
         return () => vars[s];
     }
     return vars[s];
-    if (typeof(vars[splitted[0]]) == 'function') {
-        // format:
-        // reduce of transactions parameter <expression> (parameter <expression>)
-        return (acc, cur, i, all) => {
-            let params = s.slice(splitted[0].length).split('parameter').slice(1).map(str => 
-                    splitAndRun(expression, str, vars)(acc, cur, i, all))
-            console.log(params);
-            console.log(s.slice(splitted[0].length))
-            return vars[splitted[0]].apply(undefined, params);
-        }
-    }
 }
 
 const isFunc = s => s[0] === '!' || s.indexOf('parameter') > 0;
@@ -261,6 +251,7 @@ const findCompareItem = s => {
     let splitted = s.split(' ');
     return splitted.find(str => typeof(compare(str)) == 'function');
 }
+
 const compare = s => {
     switch(s){
         case '<': return (a, b) => a < b;

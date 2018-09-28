@@ -119,6 +119,12 @@ describe('expression', () => {
         let func = expression('reduce . list parameter welcome parameter 1', {list: [1, 2, 3], welcome: (a, b) => a + b});
         expect(func()).to.equal(7);
     })
+    it('should be able to run multiple expression in succession', () => {
+        let filter = expression('acc < 0');
+        let res = expression('filter . list parameter f', {list: [1, 2, 3, -1, -2], f: filter})();
+        expect(res.toString()).to.equal('-1,-2')
+    })
+    
 });
 describe('condition', () => {
     it('should return expression', () => {
