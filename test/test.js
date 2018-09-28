@@ -91,6 +91,10 @@ describe('expression', () => {
         func = expression('1 if 1 if 1+0 else 0 else 0 if 1 else 2');
         expect(func()).to.equal(1);
     })
+    it('should check for not and handle it', () => {
+        let func = expression('1 if ! 1 else 0');
+        expect(func()).to.equal(0);
+    })
 });
 describe('condition', () => {
     it('should return expression', () => {

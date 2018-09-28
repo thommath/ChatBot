@@ -20,6 +20,7 @@ listItem := <expression> | <expression>, <expression>
 comp := < | > | <= | => | == | !=
 op := + | - | * | / | ++
 var := i | cur | acc | all.length
+func := ! <condition>
 
 # Todo
 Add syntax for filter to get correct length

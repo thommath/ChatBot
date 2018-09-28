@@ -37,7 +37,7 @@ const aliases = {
     
     'and': '\\&\\&',
     'or': '\\|\\|',
-
+    'not': '!',
 }
 
 function replaceAll(str, find, replace) {
@@ -90,6 +90,8 @@ const expression = (s, vars) => {
         return parseIf(s, vars);
     if (isList(s))
         return parseList(s, vars)
+    if (isFunc(s))
+        return getFunc(s, vars);
     if (isOperator(s))
         return parseOperator(s, vars);
     if (!isNaN(Number(s)))
@@ -113,6 +115,9 @@ const expression = (s, vars) => {
         return s;
     }
 }
+
+const isFunc = s => s[0] === '!';
+const getFunc = (s, vars) => (acc, elem, i, all) => !splitAndRun(condition, s, vars, 1)(acc, elem, i, all);
 
 const isIf = s => s.indexOf('if') !== -1;
 const findCorrespondingElse = s => {
@@ -166,13 +171,11 @@ const getConditionMergerIndex = s => {
 const hasConditionMerger = s => getConditionMergerIndex(s) !== -1;
 const getConditionMerger = s => {
     let conditionMerger = s[getConditionMergerIndex(s)];
-    console.log(conditionMerger)
     if (conditionMerger == '&')
         return (a, b) => a && b;
     return (a, b) => a || b;    
 }
 const getCondition = (s, vars) => {
-    console.log(getConditionMergerIndex(s))
     return getConditionMerger(s) (
         splitAndRun(condition, s, vars, 0, getConditionMergerIndex(s)-1), 
         splitAndRun(condition, s, vars, getConditionMergerIndex(s) + 3)
@@ -249,10 +252,6 @@ const operator = s => {
         default: return undefined;
     }
 }
-
-
-
-
 
 exports.compare = compare;
 exports.operator = operator;
