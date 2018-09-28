@@ -1,6 +1,5 @@
 
 
-
 const aliases = {
     'average': 'avg',
     'avg': 'sum total of elem / length',
@@ -88,7 +87,6 @@ const magiduse = (list, s, vars) => {
 
 const expression = (s, vars) => {
     s = cleanString(s);
-
     if (isIf(s))
         return parseIf(s, vars);
     if (isList(s))
@@ -107,8 +105,11 @@ const expression = (s, vars) => {
         return (acc, elem, i) => i;
     if(s == 'all')
         return (acc, elem, i, all) => all;
+    if(s == 'arguments')
+        return (acc, elem, i, all) => arguments;
     if (isVar(s, vars))
-        return () => parseVar(s, vars);
+        return parseVar(s, vars);
+    
     return () => s;
 }
 
@@ -120,13 +121,23 @@ const isVar = (s, vars) => {
 }
 const parseVar = (s, vars) => {
     let splitted = s.split(' ')
+    console.log(s)
     if (vars[s]) {
         if (typeof(vars[s]) == 'function')
-            return vars[s]();
-        return vars[s];
+            return vars[s];
+        return () => vars[s];
     }
-    if (typeof(vars[splitted[0]]) == 'function')
-        return vars[splitted[0]](splitAndRun(expression, s, splitted[0].length));
+    if (typeof(vars[splitted[0]]) == 'function') {
+        // format:
+        // reduce of transactions parameter <expression> (parameter <expression>)
+        return (acc, cur, i, all) => {
+            let params = s.slice(splitted[0].length).split('parameter').slice(1).map(str => 
+                    splitAndRun(expression, str, vars)(acc, cur, i, all))
+            console.log(params);
+            console.log(s.slice(splitted[0].length))
+            return vars[splitted[0]].apply(undefined, params);
+        }
+    }
 }
 
 const isFunc = s => s[0] === '!';

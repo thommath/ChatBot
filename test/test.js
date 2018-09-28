@@ -70,7 +70,7 @@ describe('expression', () => {
         expect(func()[0]).to.equal(2);
     })
     it('should work with or without spaces', () => {
-        let func = expression('i   +i', {i: 2});
+        let func = expression('i     +i', {i: 2});
         expect(func()).to.equal(4);
     });
     it('should check for if and handle it', () => {
@@ -98,6 +98,18 @@ describe('expression', () => {
     it('should handle property of', () => {
         let func = expression('total . cur');
         expect(func(0, {total: 15})).to.equal(15);
+    })
+    it('should run functions', () => {
+        let func = expression('print', {print:() => 'hey'});
+        expect(func()).to.equal('hey');
+    })
+    it('should run functions with arguments', () => {
+        let func = expression('print parameter Thomas', {print:(e) => 'hey ' + e});
+        expect(func()).to.equal('hey Thomas');
+    })
+    it('should run functions with arguments', () => {
+        let func = expression('welcome parameter Thomas parameter Carl', {welcome:(a, b) => `Welcome ${a} and ${b}`});
+        expect(func()).to.equal('Welcome Thomas and Carl');
     })
 });
 describe('condition', () => {
