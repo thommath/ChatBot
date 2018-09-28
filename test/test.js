@@ -40,8 +40,8 @@ describe('compare', () => {
     });
 })
 describe('expression', () => {
-    it('should return a property of element', () => {
-        let func = expression('property');
+    it('should return a property of variable', () => {
+        let func = expression('property . cur');
         expect(func(0, {property: 2})).to.equal(2);
     });
     it('should return a number', () => {
@@ -95,6 +95,10 @@ describe('expression', () => {
         let func = expression('1 if ! 1 else 0');
         expect(func()).to.equal(0);
     })
+    it('should handle property of', () => {
+        let func = expression('total . cur');
+        expect(func(0, {total: 15})).to.equal(15);
+    })
 });
 describe('condition', () => {
     it('should return expression', () => {
@@ -133,11 +137,11 @@ describe('func', () => {
 
 describe('magiduse', () => {
     it('should reduce a list based on input string with default value', () => {
-        let ret = magiduse([{i: [2]}], 'acc + i default list', {});
+        let ret = magiduse([{i: [2]}], 'acc + i of elem default list', {});
         expect(ret[0]).to.equal(2)
     });
     it('should replace aliases', () => {
-        let ret = magiduse([{i: [2]}], 'sum i from array', {});
+        let ret = magiduse([{i: [2]}], 'sum i of elem from array', {});
         expect(ret[0]).to.equal(2)
     });
 });
@@ -157,7 +161,7 @@ describe('aliases', () => {
     })
     describe('sum', () => {
         it('should sum', () => {
-            let ret = magiduse([{bill_date: '2018-09-20'}, {bill_date: '2018-09-10'}], 'sum date from string', {});
+            let ret = magiduse([{bill_date: '2018-09-20'}, {bill_date: '2018-09-10'}], 'sum date of elem from string', {});
             expect(ret).to.equal('2018-09-202018-09-10');
         })
     })

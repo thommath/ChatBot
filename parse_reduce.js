@@ -3,10 +3,10 @@
 
 const aliases = {
     'average': 'avg',
-    'avg': 'sum total / length',
+    'avg': 'sum total of elem / length',
     'sum': 'acc+',
-    'last': 'elem if date > acc starting with string',
-    'first': 'elem if date <= acc starting with object',
+    'last': 'elem if date of elem > acc starting with string',
+    'first': 'elem if date of elem <= acc starting with object',
 
     'date': 'bill_date',
     'element': 'elem',
@@ -38,6 +38,8 @@ const aliases = {
     'and': '\\&\\&',
     'or': '\\|\\|',
     'not': '!',
+
+    'of': '.',
 }
 
 function replaceAll(str, find, replace) {
@@ -101,20 +103,30 @@ const expression = (s, vars) => {
         return (acc, elem) => acc;
     if(s == 'cur')
         return (acc, elem) => elem;
-    if (vars && vars[s])
-        return () => vars[s];
-    if (s == 'length')
-        return (acc, elem, i, all) => all.length;
-    return (acc, elem) => {
-        if (elem) {
-            if (!isNaN(Number(elem[s]))) {
-                return Number(elem[s]);
-            } else if (elem[s] !== undefined) {
-                return elem[s];
-            }
-        }
-        return s;
+    if(s == 'index')
+        return (acc, elem, i) => i;
+    if(s == 'all')
+        return (acc, elem, i, all) => all;
+    if (isVar(s, vars))
+        return () => parseVar(s, vars);
+    return () => s;
+}
+
+const isVar = (s, vars) => {
+    if (!vars)
+        return false;
+    let splitted = s.split(' ')
+    return vars[s] || vars[splitted[0]]
+}
+const parseVar = (s, vars) => {
+    let splitted = s.split(' ')
+    if (vars[s]) {
+        if (typeof(vars[s]) == 'function')
+            return vars[s]();
+        return vars[s];
     }
+    if (typeof(vars[splitted[0]]) == 'function')
+        return vars[splitted[0]](splitAndRun(expression, s, splitted[0].length));
 }
 
 const isFunc = s => s[0] === '!';
@@ -184,7 +196,6 @@ const getCondition = (s, vars) => {
 } 
 
 const condition = (s, vars) => {
-
     if (hasConditionMerger(s))
         return getCondition(s, vars);
 
@@ -232,11 +243,11 @@ const parseOperator = (s, vars) => {
     // Apply the operator found on both sides of the expression
     return (acc, elem, i, all) => operator(s[index])
         (   
-            expression(s.slice(0, index), vars) (acc, elem, i, all), 
-            expression(s.slice(index+1), vars) (acc, elem, i, all)
+            splitAndRun(expression, s, vars, 0, index) (acc, elem, i, all), 
+            splitAndRun(expression, s, vars, index+1) (acc, elem, i, all)
         );
 }
-const operator_prioritized = s => s == '*' || s == '/';
+const operator_prioritized = s => s == '*' || s == '/' || s == '.';
 const operator_not_prioritized = s => s == '+' || s == '-';
 
 const operator = s => {
@@ -250,6 +261,7 @@ const operator = s => {
         case '-': return (a, b) => a - b;
         case '*': return (a, b) => a * b;
         case '/': return (a, b) => a / b;
+        case '.': return (a, b) => b[a];
         default: return undefined;
     }
 }
