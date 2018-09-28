@@ -6,7 +6,7 @@ const aliases = {
     'avg': 'sum total / length',
     'sum': 'acc+',
     'last': 'elem if date > acc starting with string',
-    'first': 'acc if date > acc else elem starting with string',
+    'first': 'elem if date <= acc starting with object',
 
     'date': 'bill_date',
     'element': 'elem',
@@ -75,6 +75,7 @@ const magiduse = (list, s, vars) => {
             case 'list': def = [];break;
             case 'int': def = 0;break;
             case 'string': def = '';break;
+            case 'object': def = {};break;
             default: def = expression(s, vars)();
         }
         return list.reduce(splitAndRun(expression, s, vars, 0, defaultIndex-1), def);
