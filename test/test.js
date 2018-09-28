@@ -3,7 +3,7 @@ var expect = require('chai').expect
   , foo = 'bar'
   , beverages = { tea: [ 'chai', 'matcha', 'oolong' ] };
 
-const { operator, something, compare, func, condition, magiduse } = require('../parse_reduce');
+const { operator, expression, compare, parseIf, condition, magiduse } = require('../parse_reduce');
 
 
   describe('operator', () => {
@@ -39,61 +39,61 @@ describe('compare', () => {
         expect(func(7, 7)).to.be.true;
     });
 })
-describe('something', () => {
+describe('expression', () => {
     it('should return a property of element', () => {
-        let func = something('property');
+        let func = expression('property');
         expect(func(0, {property: 2})).to.equal(2);
     });
     it('should return a number', () => {
-        let func = something('2');
+        let func = expression('2');
         expect(func()).to.equal(2);
     });
     it('should return a variable', () => {
-        let func = something('i', {i: 2});
+        let func = expression('i', {i: 2});
         expect(func()).to.equal(2);
     });
     it('should return a string', () => {
-        let func = something('hello');
+        let func = expression('hello');
         expect(func()).to.equal('hello');
     });
     it('should calculate an simple expression', () => {
-        let func = something('i+2/2-1', {i: 2});
+        let func = expression('i+2/2-1', {i: 2});
         expect(func()).to.equal(2);
     });
     it('should return a list', () => {
-        let func = something('i+i', {i: [2]});
+        let func = expression('i+i', {i: [2]});
         expect(func().length).to.equal(2);
     })
     it('should parse and add lists', () => {
-        let func = something('[i]+[i]', {i: 2});
+        let func = expression('[i]+[i]', {i: 2});
         expect(func().length).to.equal(2);
         expect(func()[0]).to.equal(2);
     })
     it('should work with or without spaces', () => {
-        let func = something('i   +i', {i: 2});
+        let func = expression('i   +i', {i: 2});
         expect(func()).to.equal(4);
     });
     it('should check for if and handle it', () => {
-        let func = something('1 if 1 else 0');
+        let func = expression('1 if 1 else 0');
         expect(func()).to.equal(1);
     })
     it('should check for serialized if and handle it', () => {
-        let func = something('1 if 0 else 0 if 0 else 2');
+        let func = expression('1 if 0 else 0 if 0 else 2');
         expect(func()).to.equal(2);
-        func = something('1 if 0 else 0 if 1 else 2');
+        func = expression('1 if 0 else 0 if 1 else 2');
         expect(func()).to.equal(0);
     })
     it('should check for nested if and handle it', () => {
-        let func = something('1 if 0 if 1 else 1 else 0 if 0 else 2');
+        let func = expression('1 if 0 if 1 else 1 else 0 if 0 else 2');
         expect(func()).to.equal(2);
-        func = something('1 if 1 if 0 else 0 else 0 if 1 else 2');
+        func = expression('1 if 1 if 0 else 0 else 0 if 1 else 2');
         expect(func()).to.equal(0);
-        func = something('1 if 1 if 1+0 else 0 else 0 if 1 else 2');
+        func = expression('1 if 1 if 1+0 else 0 else 0 if 1 else 2');
         expect(func()).to.equal(1);
     })
 });
 describe('condition', () => {
-    it('should return something', () => {
+    it('should return expression', () => {
         let func = condition('2');
         expect(func()).to.equal(2);
     });
@@ -103,26 +103,26 @@ describe('condition', () => {
         func = condition('2 > 2');
         expect(func()).to.be.false;
     });
-    it('should return result of comparison', () => {
-        let func = condition('2 == 2 and 1 < 2');
+    it('should return result of or', () => {
+        let func = condition('2 == 2 || 1 > 2');
         expect(func()).to.be.true;
-    });    
+    });
+    it('should return result of and', () => {
+        func = condition('2 == 2 && 1 < 2');
+        expect(func()).to.be.true;
+    });
 });
 describe('func', () => {
-    it('should return something', () => {
-        let f = func('2');
-        expect(f()).to.equal(2);
-    });
-    it('should return something based on condition', () => {
-        let f = func('2 if 2 < 1 else 3');
+    it('should return expression based on condition', () => {
+        let f = parseIf('2 if 2 < 1 else 3');
         expect(f()).to.equal(3);
-        f = func('2 if 2 > 1 else 3');
+        f = parseIf('2 if 2 > 1 else 3');
         expect(f()).to.equal(2);
     });
     it('should use acc as default else', () => {
-        let f = func('2 if 2 < 1');
+        let f = parseIf('2 if 2 < 1');
         expect(f(3)).to.equal(3);
-        f = func('2 if 2 > 1');
+        f = parseIf('2 if 2 > 1');
         expect(f(3)).to.equal(2);
     })
 });
@@ -135,5 +135,26 @@ describe('magiduse', () => {
     it('should replace aliases', () => {
         let ret = magiduse([{i: [2]}], 'sum i from array', {});
         expect(ret[0]).to.equal(2)
+    });
+});
+
+describe('aliases', () => {
+    describe('last', () => {
+        it('should return last elem', () => {
+            let ret = magiduse([{bill_date: '2018-09-20'}, {bill_date: '2018-09-10'}], 'last', {});
+            expect(ret.bill_date).to.equal('2018-09-20');
+        })
+    })
+    describe('first', () => {
+        it('should return first elem', () => {
+            let ret = magiduse([{bill_date: '2018-09-20'}, {bill_date: '2018-09-10'}], 'first', {});
+            expect(ret.bill_date).to.equal('2018-09-10');
+        })
+    })
+    describe('sum', () => {
+        it('should sum', () => {
+            let ret = magiduse([{bill_date: '2018-09-20'}, {bill_date: '2018-09-10'}], 'sum date from string', {});
+            expect(ret).to.equal('2018-09-202018-09-10');
+        })
     })
 })

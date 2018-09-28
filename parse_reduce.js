@@ -2,10 +2,17 @@
 
 
 const aliases = {
-    'sum': 'acc+',
     'average': 'avg',
-    'avg': 'acc + total / length',
+    'avg': 'sum total / length',
+    'sum': 'acc+',
+    'last': 'elem if date > acc starting with string',
+    'first': 'acc if date > acc else elem starting with string',
 
+    'date': 'bill_date',
+    'element': 'elem',
+    'transaction': 'elem',
+    'elem': 'cur',
+    'accumulator': 'acc',
     'array': 'list',
     'integer': 'int',
     'number': 'int',
@@ -28,8 +35,9 @@ const aliases = {
 
     'where': 'if',
     
-    '\\&\\&': 'and',
-    '\\|\\|': 'or',
+    'and': '\\&\\&',
+    'or': '\\|\\|',
+
 }
 
 function replaceAll(str, find, replace) {
@@ -43,6 +51,19 @@ const preprocess = s => {
     return s;
 }
 
+const cleanString = s => {
+    // Remove spaces first and last
+    if (s[0] == ' ') {
+        return cleanString(s.slice(1));
+    }
+    if (s[s.length-1] == ' ') {
+        return cleanString(s.slice(0, s.length-1));
+    }
+    return s;
+}
+const splitAndRun = (f, s, vars, from, to) => f(cleanString(s.slice(from, to)), vars);
+
+
 const magiduse = (list, s, vars) => {
     s = preprocess(s);
 
@@ -54,13 +75,46 @@ const magiduse = (list, s, vars) => {
             case 'list': def = [];break;
             case 'int': def = 0;break;
             case 'string': def = '';break;
-            default: def = something(s, vars)();
+            default: def = expression(s, vars)();
         }
-        return list.reduce(func(s.slice(0, defaultIndex-1), vars), def);
+        return list.reduce(splitAndRun(expression, s, vars, 0, defaultIndex-1), def);
     }
-    return list.reduce(func(s, vars), def);
+    return list.reduce(expression(s, vars), def);
 }
 
+
+const expression = (s, vars) => {
+    s = cleanString(s);
+
+    if (isIf(s))
+        return parseIf(s, vars);
+    if (isList(s))
+        return parseList(s, vars)
+    if (isOperator(s))
+        return parseOperator(s, vars);
+    if (!isNaN(Number(s)))
+        return () => Number(s);
+    if(s == 'acc') 
+        return (acc, elem) => acc;
+    if(s == 'cur')
+        return (acc, elem) => elem;
+    if (vars && vars[s])
+        return () => vars[s];
+    if (s == 'length')
+        return (acc, elem, i, all) => all.length;
+    return (acc, elem) => {
+        if (elem) {
+            if (!isNaN(Number(elem[s]))) {
+                return Number(elem[s]);
+            } else if (elem[s] !== undefined) {
+                return elem[s];
+            }
+        }
+        return s;
+    }
+}
+
+const isIf = s => s.indexOf('if') !== -1;
 const findCorrespondingElse = s => {
     let ifs = 0;
     let index = 0;
@@ -79,42 +133,56 @@ const findCorrespondingElse = s => {
     }
     return -1;
 }
-
-const func = (s, vars) => {
+const parseIf = (s, vars) => {
     s = cleanString(s);
     let ifIndex = s.indexOf('if');
 
     if (ifIndex === -1) {
-        return something(s, vars);
+        return expression(s, vars);
     }
     let elseIndex = findCorrespondingElse(s);
 
     return (acc, elem, i, all) => {
         // Default is return acc
         if (elseIndex === -1) {
-            if (condition(s.slice(ifIndex+2), vars)(acc, elem, i, all)) {
-                return something(s.slice(0, ifIndex), vars)(acc, elem, i, all);
+            if (splitAndRun(condition, s, vars, ifIndex+2)(acc, elem, i, all)) {
+                return splitAndRun(expression, s, vars, 0, ifIndex)(acc, elem, i, all);
             }
             return acc;
         }
 
-        if (condition(s.slice(ifIndex+2, elseIndex-1), vars)(acc, elem, i, all)) {
-            return something(s.slice(0, ifIndex), vars)(acc, elem, i, all);
+        if (splitAndRun(condition, s, vars, ifIndex+2, elseIndex-1)(acc, elem, i, all)) {
+            return splitAndRun(expression, s, vars, 0, ifIndex)(acc, elem, i, all);
         }        
-        return something(s.slice(elseIndex + 4), vars)(acc, elem, i, all);
+        return splitAndRun(expression, s, vars, elseIndex+4)(acc, elem, i, all);
     };
 }
+const getConditionMergerIndex = s => {
+    let index = s.indexOf('||');
+    if (index !== -1)
+        return index;
+    return s.indexOf('&&');
+}
+const hasConditionMerger = s => getConditionMergerIndex(s) !== -1;
+const getConditionMerger = s => {
+    let conditionMerger = s[getConditionMergerIndex(s)];
+    console.log(conditionMerger)
+    if (conditionMerger == '&')
+        return (a, b) => a && b;
+    return (a, b) => a || b;    
+}
+const getCondition = (s, vars) => {
+    console.log(getConditionMergerIndex(s))
+    return getConditionMerger(s) (
+        splitAndRun(condition, s, vars, 0, getConditionMergerIndex(s)-1), 
+        splitAndRun(condition, s, vars, getConditionMergerIndex(s) + 3)
+    );
+} 
 
 const condition = (s, vars) => {
-    // Condition merger
-    let conditionMergerIndex = s.indexOf('and');
-    if (conditionMergerIndex !== -1) {
-        return condition(s.slice(0, conditionMergerIndex-1)) && condition(s.slice(conditionMergerIndex + 4));
-    }
-    conditionMergerIndex = s.indexOf('or');
-    if (conditionMergerIndex !== -1) {
-        return condition(s.slice(0, conditionMergerIndex-1)) || condition(s.slice(conditionMergerIndex + 3));
-    }
+
+    if (hasConditionMerger(s))
+        return getCondition(s, vars);
 
     // If single condition
     let compareItem = findCompareItem(s);
@@ -123,83 +191,17 @@ const condition = (s, vars) => {
 
         return (acc, elem, i, all) => compare(compareItem)
             (
-                something(s.slice(0, compareItemIndex-1), vars)(acc, elem, i, all),
-                something(s.slice(compareItemIndex + compareItem.length + 1), vars)(acc, elem, i, all)
+                expression(s.slice(0, compareItemIndex-1), vars)(acc, elem, i, all),
+                expression(s.slice(compareItemIndex + compareItem.length + 1), vars)(acc, elem, i, all)
             )
     } else {
-        return (acc, elem, i, all) => something(s, vars)(acc, elem, i, all);
+        return (acc, elem, i, all) => expression(s, vars)(acc, elem, i, all);
     }
 }
-
 const findCompareItem = s => {
     let splitted = s.split(' ');
     return splitted.find(str => typeof(compare(str)) == 'function');
 }
-
-
-const cleanString = s => {
-    // Remove spaces first and last
-    if (s[0] == ' ') {
-        return cleanString(s.slice(1));
-    }
-    if (s[s.length-1] == ' ') {
-        return cleanString(s.slice(0, s.length-1));
-    }
-    return s;
-}
-
-const something = (s, vars) => {
-    s = cleanString(s);
-
-    // If condition 
-    if (s.indexOf('if') !== -1) {
-        return func(s, vars);
-    }
-
-    // is list?
-    const isList = s[0] == '[' && s.indexOf(']') === s.length -1;
-    if (isList) {
-        return (acc, elem, i, all) => s.slice(1, s.length-1).split(', ').map(e => something(e, vars)(acc, elem, i, all));
-    }
-
-    // contains operator?
-    let index = s.split('').findIndex(st => operator_not_prioritized(st))
-    if (index === -1) {
-        index = s.split('').findIndex(st => operator_prioritized(st));
-    }
-    if (index !== -1) {
-        // Apply the operator found on both sides of the something
-        return (acc, elem, i, all) => operator(s[index])
-            (   
-                something(s.slice(0, index), vars) (acc, elem, i, all), 
-                something(s.slice(index+1), vars) (acc, elem, i, all)
-            );
-    }
-
-    if (!isNaN(Number(s))) {
-        return () => Number(s);
-    } else if(s == 'acc') {
-        return (acc, elem) => acc;
-    } else if(s == 'cur') {
-        return (acc, elem) => elem;
-    } else if (vars && vars[s]) {
-        return () => vars[s];
-    } else if (s == 'length') {
-        return (acc, elem, i, all) => all.length;
-    } else {
-        return (acc, elem) => {
-            if (elem) {
-                if (!isNaN(Number(elem[s]))) {
-                    return Number(elem[s]);
-                } else if (elem[s] !== undefined) {
-                    return elem[s];
-                }
-            }
-            return s;
-        }
-    }
-}
-
 const compare = s => {
     switch(s){
         case '<': return (a, b) => a < b;
@@ -212,6 +214,24 @@ const compare = s => {
     }
 }
 
+const isList = s => s[0] == '[' && s.indexOf(']') === s.length -1;
+const parseList = (s, vars) => (acc, elem, i, all) => s.slice(1, s.length-1).split(', ').map(e => expression(e, vars)(acc, elem, i, all));
+
+
+const isOperator = s => s.split('').findIndex(st => operator_not_prioritized(st)) !== -1 || s.split('').findIndex(st => operator_prioritized(st)) !== -1;
+const parseOperator = (s, vars) => {
+    // contains operator?
+    let index = s.split('').findIndex(st => operator_not_prioritized(st));
+    if (index === -1) {
+        index = s.split('').findIndex(st => operator_prioritized(st));
+    }
+    // Apply the operator found on both sides of the expression
+    return (acc, elem, i, all) => operator(s[index])
+        (   
+            expression(s.slice(0, index), vars) (acc, elem, i, all), 
+            expression(s.slice(index+1), vars) (acc, elem, i, all)
+        );
+}
 const operator_prioritized = s => s == '*' || s == '/';
 const operator_not_prioritized = s => s == '+' || s == '-';
 
@@ -230,10 +250,13 @@ const operator = s => {
     }
 }
 
+
+
+
+
 exports.compare = compare;
 exports.operator = operator;
-exports.something = something;
-exports.func = func;
+exports.expression = expression;
+exports.parseIf = parseIf;
 exports.condition = condition;
 exports.magiduse = magiduse;
-exports.get_reduce_function = (s, vars) => func(s, vars);

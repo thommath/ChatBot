@@ -6,16 +6,16 @@
 get transactions after {start_date} in {category} and reduce transaction total plus accumilator
 
 
-S := <func>
-func := <something> | <something> if <condition> else <something>
+S := <expression>
+func := <expression> | <expression> if <condition> else <expression>
 
-condition := <something> | <something> <comp> <something> | <condition> <condition_merger> <condition>
+condition := <expression> | <expression> <comp> <expression> | <condition> <condition_merger> <condition>
 condition_merger := || | &&
 
-something := <list> | property-of-elem | number | <var> | <something> <op> <something> | <func>
+expression := <list> | property-of-elem | number | <var> | <expression> <op> <expression> | <somthing> if <condition> else <expression>
 
 list := [] | [<listItem>]
-listItem := <something> | <something>, <something>
+listItem := <expression> | <expression>, <expression>
 
 comp := < | > | <= | => | == | !=
 op := + | - | * | / | ++
@@ -25,7 +25,7 @@ var := i | cur | acc | all.length
 Add syntax for filter to get correct length
 nest reduce? 
 Add categories as possible input list
-
+Add not
 
 filter:
 reduce((cur, acc) => 
