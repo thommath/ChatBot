@@ -3,7 +3,7 @@ var expect = require('chai').expect
   , foo = 'bar'
   , beverages = { tea: [ 'chai', 'matcha', 'oolong' ] };
 
-const { operator, expression, compare, parseIf, condition, magiduse } = require('../parse_reduce');
+const { operator, expression, compare, parseIf, condition, magiduse, language } = require('../parse_reduce');
 
 
   describe('operator', () => {
@@ -107,6 +107,7 @@ describe('expression', () => {
         let func = expression('printParam parameter Thomas', {printParam:(e) => 'hey ' + e});
         expect(func()).to.equal('hey Thomas');
     })
+    
     it('should run functions with arguments', () => {
         let func = expression('welcome parameter Thomas parameter Carl', {welcome:(a, b) => `Welcome ${a} and ${b}`});
         expect(func()).to.equal('Welcome Thomas and Carl');
@@ -124,7 +125,7 @@ describe('expression', () => {
         let res = expression('filter . list parameter f', {list: [1, 2, 3, -1, -2], f: filter})();
         expect(res.toString()).to.equal('-1,-2')
     })
-    
+
 });
 describe('condition', () => {
     it('should return expression', () => {
@@ -189,6 +190,41 @@ describe('aliases', () => {
         it('should sum', () => {
             let ret = magiduse([{bill_date: '2018-09-20'}, {bill_date: '2018-09-10'}], 'sum date of elem from string', {});
             expect(ret).to.equal('2018-09-202018-09-10');
+        })
+    })
+})
+
+describe('language', () => {
+    describe('remember', () => {
+        it('should remember expression or result', () => {
+            let vars = language('remember 1 as one');
+            expect(vars['one']()).to.equal(1);
+        })
+        it('should remember result of expression', () => {
+            let vars = language('remember 1 + 1 as one');
+            expect(vars['one']()).to.equal(2);
+        })
+        it('should remember complex functions', () => {
+            let vars = language('remember a + 0 . args as complex', {a: 2});
+            expect(vars['complex'](2)).to.equal(4);
+        })
+    })
+    describe('function', () => {
+        it('should define functions', () => {
+            let func = language('function do 1 + 2');
+            expect(func()).to.equal(3);
+        })
+        it('should return argument list', () => {
+            let func = language('function do arguments');
+            expect(func(1, 2, 3).toString()).to.equal([1, 2, 3].toString());
+        })
+        it('should return first argument', () => {
+            let func = language('function do 0 . arguments');
+            expect(func(1, 2, 3)).to.equal(1);
+        })
+        it('should define functions with parameters', () => {
+            let func = language('function do 0 of arguments + 1 of arguments');
+            expect(func(1, 2)).to.equal(3);
         })
     })
 })

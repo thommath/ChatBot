@@ -65,6 +65,50 @@ const cleanString = s => {
 const splitAndRun = (f, s, vars, from, to) => f(cleanString(s.slice(from, to)), vars);
 
 
+
+const isFunction = s => s.indexOf('function') === 0;
+const parseFunction = (s, vars) => {
+    let doIndex = s.indexOf('do');
+    
+    console.log(s.slice(doIndex+3))
+
+    let func = expression(s.slice(doIndex+3), vars);
+
+    return function (...args) {
+        console.log('args', args);
+        return func(args);
+    }
+}
+
+const isRemember = s => s.indexOf('remember') !== -1;
+const parseRemember = (s, vars = {}) => {
+    const asIndex = s.indexOf('as');
+
+    let func = splitAndRun(expression, s, vars, 9, asIndex);
+
+    vars[s.slice(asIndex+3)] = function (...args) {
+        return func(args);
+    };
+
+    return vars;
+}
+
+
+const language = (s, vars) => {
+    s = preprocess(s);
+
+    s = cleanString(s);
+
+    if (isFunction(s)) {
+        return parseFunction(s, vars);
+    }
+    if (isRemember(s)) {
+        return parseRemember(s, vars);
+    }
+    return 'error'
+}
+
+
 const magiduse = (list, s, vars) => {
     s = preprocess(s);
 
@@ -87,6 +131,7 @@ const magiduse = (list, s, vars) => {
 
 const expression = (s, vars) => {
     s = cleanString(s);
+
     if (isIf(s))
         return parseIf(s, vars);
     if (isList(s))
@@ -107,8 +152,8 @@ const expression = (s, vars) => {
         return (acc, elem, i) => i;
     if(s == 'all')
         return (acc, elem, i, all) => all;
-    if(s == 'arguments')
-        return (acc, elem, i, all) => arguments;
+    if(s == 'arguments' || s == 'args')
+        return args => args;
     if (isVar(s, vars))
         return parseVar(s, vars);
     
@@ -267,25 +312,11 @@ const compare = s => {
 const isList = s => s[0] == '[' && s.indexOf(']') === s.length -1;
 const parseList = (s, vars) => (acc, elem, i, all) => s.slice(1, s.length-1).split(', ').map(e => expression(e, vars)(acc, elem, i, all));
 
-
-const isOperator = s => s.split('').findIndex(st => operator_not_prioritized(st)) !== -1 || s.split('').findIndex(st => operator_prioritized(st)) !== -1;
-const parseOperator = (s, vars) => {
-    // contains operator?
-    let index = s.split('').findIndex(st => operator_not_prioritized(st));
-    if (index === -1) {
-        index = s.split('').findIndex(st => operator_prioritized(st));
-    }
-    // Apply the operator found on both sides of the expression
-    return (acc, elem, i, all) => operator(s[index])
-        (   
-            splitAndRun(expression, s, vars, 0, index) (acc, elem, i, all),
-            splitAndRun(expression, s, vars, index+1) (acc, elem, i, all)
-        );
-}
 const operator_prioritized = s => s == '*' || s == '/' || s == '.';
 const operator_not_prioritized = s => s == '+' || s == '-';
 
 const operator = s => {
+    console.log('operator', s)
     switch(s){
         case '+': return (a, b) => {
             if (Array.isArray(a)) {
@@ -301,9 +332,30 @@ const operator = s => {
     }
 }
 
+const isOperator = s => s.split('').findIndex(st => operator_not_prioritized(st)) !== -1 || s.split('').findIndex(st => operator_prioritized(st)) !== -1;
+const parseOperator = (s, vars) => {
+    // contains operator?
+    let index = s.split('').findIndex(st => operator_not_prioritized(st));
+    if (index === -1) {
+        index = s.split('').findIndex(st => operator_prioritized(st));
+    }
+    console.log('parse operator', s, s[index])
+    // Apply the operator found on both sides of the expression
+    return (acc, elem, i, all) => {
+        console.log(splitAndRun(expression, s, vars, 0, index) (acc, elem, i, all))
+        console.log(splitAndRun(expression, s, vars, index+1) (acc, elem, i, all))
+        return operator(s[index])
+        (   
+            splitAndRun(expression, s, vars, 0, index) (acc, elem, i, all),
+            splitAndRun(expression, s, vars, index+1) (acc, elem, i, all)
+        );}
+}
+
+
 exports.compare = compare;
 exports.operator = operator;
 exports.expression = expression;
 exports.parseIf = parseIf;
 exports.condition = condition;
 exports.magiduse = magiduse;
+exports.language = language;
