@@ -12,7 +12,7 @@ func := <expression> | <expression> if <condition> else <expression>
 condition := <expression> | <expression> <comp> <expression> | <condition> <condition_merger> <condition>
 condition_merger := || | &&
 
-expression := <list> | property | number | <var> | <function> <expression> | <expression> <op> <expression> | <somthing> if <condition> else <expression>
+expression := <list> | property | number | <var> | <function> <expression> | <expression> <op> <expression> | <expression> if <condition> else <expression>
 
 list := [] | [<listItem>]
 listItem := <expression> | <expression>, <expression>
@@ -22,7 +22,31 @@ op := + | - | * | / | .
 var := i | cur | acc | all
 func := ! <condition>
 
+
+
+
+
+S := <expression> | <expression> then <S>
+expression := 
+    function do <expression> | 
+    while <condition> do <expression>
+    remember <expression> as <string> | 
+    <expression> if <condition> else <expression> | 
+    <expression> also <expression> | 
+    run <expression> | 
+    <expression> <op> <expression> | 
+    <list> | 
+    property | 
+    number | 
+    <var> | 
+
+
+
+
 # Todo
 Add categories as possible input list
 () 
 remember vars in scope 
+Remember inside remember, while inside while etc.  
+Remember inside remember 
+Remove function 'do'

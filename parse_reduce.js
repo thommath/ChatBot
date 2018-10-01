@@ -84,28 +84,47 @@ const isRemember = s => s.indexOf('remember') !== -1;
 const parseRemember = (s, vars = {}) => {
     const asIndex = s.indexOf('as');
 
-    let func = splitAndRun(expression, s, vars, 9, asIndex);
+    let func = splitAndRun(language, s, vars, 9, asIndex);
 
-    vars[s.slice(asIndex+3)] = function (...args) {
-        return func(args);
-    };
+    vars[s.slice(asIndex+3)] = func;
 
     return vars;
+}
+
+const isThen = s => s.indexOf('then') !== -1;
+const parseThen = (s, vars) => {
+    let splitted = s.split('then');
+    let res;
+
+    for (let i = 0; i < splitted.length; i++) {
+        res = splitAndRun(language, splitted[i], vars);
+        if (typeof(res) === 'object') {
+            vars = res;
+        }
+        console.log('arguments from them', vars)
+    }
+    return res;
+}
+const isAlso = s => s.indexOf('also') !== -1;
+const parseAlso = (s, vars) => {
+    let splitted = s.split('also');
+    let res;
+
+    for (let i = 0; i < splitted.length; i++) {
+        res = splitAndRun(language, splitted[i], vars);
+        if (typeof(res) === 'object') {
+            vars = res;
+        }
+    }
+    return res;
 }
 
 
 const language = (s, vars) => {
     s = preprocess(s);
-
     s = cleanString(s);
 
-    if (isFunction(s)) {
-        return parseFunction(s, vars);
-    }
-    if (isRemember(s)) {
-        return parseRemember(s, vars);
-    }
-    return 'error'
+    return expression(s, vars)
 }
 
 
@@ -132,16 +151,35 @@ const magiduse = (list, s, vars) => {
 const expression = (s, vars) => {
     s = cleanString(s);
 
+    if (isThen(s))
+        return parseThen(s, vars);
+
+    if (isFunction(s))
+        return parseFunction(s, vars);
+
+    if (isWhile(s))
+        return parseWhile(s, vars);
+
+    if (isAlso(s))
+        return parseAlso(s, vars);
+
+    if (isRemember(s))
+        return parseRemember(s, vars);
+
     if (isIf(s))
         return parseIf(s, vars);
-    if (isList(s))
-        return parseList(s, vars)
+
     if (isFunc(s))
         return getFunc(s, vars);
-    if (findCompareItem(s) !== undefined)
-        return condition(s, vars);
+
     if (isOperator(s))
         return parseOperator(s, vars);
+
+        
+    if (isList(s))
+        return parseList(s, vars)
+    if (findCompareItem(s) !== undefined)
+        return condition(s, vars);
     if (!isNaN(Number(s)))
         return () => Number(s);
     if(s == 'acc') 
@@ -156,8 +194,27 @@ const expression = (s, vars) => {
         return args => args;
     if (isVar(s, vars))
         return parseVar(s, vars);
+
+    if (s == 'space')
+        return () => ' ';
     
     return () => s;
+}
+
+const isWhile = s => s.indexOf('while') === 0;
+const parseWhile = (s, vars) => {
+    const doIndex = s.indexOf('do');
+    const cond = splitAndRun(condition, s, vars, 6, doIndex);
+
+    // console.log(s.slice(6, doIndex), s.slice(doIndex+3))
+
+    return (args) => {
+        while(cond(args, vars)) {
+            vars = splitAndRun(language, s, vars, doIndex+3);
+        }
+        return vars;
+    };
+
 }
 
 const isVar = (s, vars) => {
@@ -167,48 +224,49 @@ const isVar = (s, vars) => {
 }
 const parseVar = (s, vars) => {
     let splitted = s.split(' ')
-    console.log('parsevar: ', s)
     if (vars[s]) {
-        if (typeof(vars[s]) == 'function'){
-
-            console.log('Running fucntion:', vars[s].apply(undefined, ['meme', 'other']))
-            return () => vars[s];
-        }
         return () => vars[s];
     }
     return vars[s];
 }
 
-const isFunc = s => s[0] === '!' || s.indexOf('parameter') > 0;
+const isFunc = s => s.indexOf('run') === 0 || s.indexOf('parameter') > 0;
 const getFunc = (s, vars) => {
-    if (s[0] == '!')
-        return (acc, elem, i, all) => !splitAndRun(condition, s, vars, 1)(acc, elem, i, all);
-    return (acc, elem, i, all) => {
-        console.log(s);
+    // if (s[0] == '!')
+    //     return (acc, elem, i, all) => !splitAndRun(condition, s, vars, 1)(acc, elem, i, all);
+    
+    // console.log(s);
 
-        // Get context 
-        let context = undefined;
-        if (s.indexOf('.') !== -1) {
-            context = splitAndRun(expression, s, vars, s.indexOf('.')+1, s.indexOf('parameter'))(acc, elem, i, all);
-        }
+    if (s.indexOf('run') === 0)
+        s = s.slice(4);
 
+
+    let params = [];
+    let to = s.length;
+    if (s.indexOf('parameter') >= 0) {
         // Get params
-        let params = s.slice(s.indexOf('parameter')).split('parameter').slice(1).map(str => {
-            console.log('String:', str)
+        params = s.slice(s.indexOf('parameter')).split('parameter').slice(1).map(str => {
             let parsed = splitAndRun(expression, str, vars);
-                return parsed(acc, elem, i, all);
+            return parsed();
         });
-        console.log(params);
-        console.log(typeof(splitAndRun(expression, s, vars, 0, s.indexOf('parameter'))))
-
-
-        console.log('applying ', splitAndRun(expression, s, vars, 0, s.indexOf('parameter'))(acc, elem, i, all), 'on', context, 'with', params)
-
-        return splitAndRun(expression, s, vars, 0, s.indexOf('parameter'))(acc, elem, i, all).apply(
-            context,
-            params
-        )
+        to = s.indexOf('parameter');
     }
+
+    let func = splitAndRun(expression, s, vars, 0, to);
+
+    // Get context 
+    let context = undefined;
+    if (s.indexOf('.') !== -1) {
+        context = splitAndRun(expression, s, vars, s.indexOf('.')+1, to)();
+        func = func();
+    }
+
+    // console.log('applying ', func, 'on', context, 'with', params)
+
+    return func.apply(
+        context,
+        params
+    )
 }
 
 const isIf = s => s.indexOf('if') !== -1;
@@ -316,7 +374,7 @@ const operator_prioritized = s => s == '*' || s == '/' || s == '.';
 const operator_not_prioritized = s => s == '+' || s == '-';
 
 const operator = s => {
-    console.log('operator', s)
+    // console.log('operator', s)
     switch(s){
         case '+': return (a, b) => {
             if (Array.isArray(a)) {
@@ -339,11 +397,9 @@ const parseOperator = (s, vars) => {
     if (index === -1) {
         index = s.split('').findIndex(st => operator_prioritized(st));
     }
-    console.log('parse operator', s, s[index])
+    // console.log('parse operator', s, s[index])
     // Apply the operator found on both sides of the expression
     return (acc, elem, i, all) => {
-        console.log(splitAndRun(expression, s, vars, 0, index) (acc, elem, i, all))
-        console.log(splitAndRun(expression, s, vars, index+1) (acc, elem, i, all))
         return operator(s[index])
         (   
             splitAndRun(expression, s, vars, 0, index) (acc, elem, i, all),
