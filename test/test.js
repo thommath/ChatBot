@@ -3,7 +3,7 @@ var expect = require('chai').expect
   , foo = 'bar'
   , beverages = { tea: [ 'chai', 'matcha', 'oolong' ] };
 
-const { operator, expression, compare, parseIf, condition, magiduse, language } = require('../parse_reduce');
+const { operator, compare, parseIf, condition, magiduse, expression } = require('../parse_reduce');
 
 
   describe('operator', () => {
@@ -91,10 +91,10 @@ describe('expression', () => {
         func = expression('1 if 1 if 1+0 else 0 else 0 if 1 else 2');
         expect(func()).to.equal(1);
     })
-    it('should check for not and handle it', () => {
-        let func = expression('1 if ! 1 else 0');
-        expect(func()).to.equal(0);
-    })
+    // it('should check for not and handle it', () => {
+    //     let func = expression('1 if run not parameter run 1 else 0', {not: (a) => !a});
+    //     expect(func()).to.equal(0);
+    // })
     it('should handle property of', () => {
         let func = expression('total . cur');
         expect(func(0, {total: 15})).to.equal(15);
@@ -194,74 +194,74 @@ describe('aliases', () => {
     })
 })
 
-describe('language', () => {
+describe('expression', () => {
     describe('remember', () => {
         it('should remember expression or result', () => {
-            let vars = language('remember 1 as one');
+            let vars = expression('remember 1 as one');
             expect(vars['one']()).to.equal(1);
         })
         it('should remember result of expression', () => {
-            let vars = language('remember 1 + 1 as one');
+            let vars = expression('remember 1 + 1 as one');
             expect(vars['one']()).to.equal(2);
         })
         it('should remember complex functions', () => {
-            let vars = language('remember function do a + 0 . args as complex', {a: 2});
+            let vars = expression('remember function do a + 0 . args as complex', {a: 2});
             expect(vars['complex'](2)).to.equal(4);
         })
         it('should remember overwrite', () => {
-            let vars = language('remember run a + 1 as b', {a: 2});
+            let vars = expression('remember run a + 1 as b', {a: 2});
             expect(vars['b']).to.equal(3);
         })
     })
     describe('function', () => {
         it('should define functions', () => {
-            let func = language('function do 1 + 2');
+            let func = expression('function do 1 + 2');
             expect(func()).to.equal(3);
         })
         it('should return argument list', () => {
-            let func = language('function do arguments');
+            let func = expression('function do arguments');
             expect(func(1, 2, 3).toString()).to.equal([1, 2, 3].toString());
         })
         it('should return first argument', () => {
-            let func = language('function do 0 . arguments');
+            let func = expression('function do 0 . arguments');
             expect(func(1, 2, 3)).to.equal(1);
         })
         it('should define functions with parameters', () => {
-            let func = language('function do 0 of arguments + 1 of arguments');
+            let func = expression('function do 0 . arguments + 1 . arguments');
             expect(func(1, 2)).to.equal(3);
         })
     })
 
     describe('then and also', () => {
         it('should execute multiple operations and return last element and remember vars from earlier with then', () => {
-            let func = language('remember run 1+1 as two then run two');
+            let func = expression('remember run 1+1 as two then run two');
             expect(func).to.equal(2)
         })
         it('should execute multiple operations and return last element and remember vars from earlier with also', () => {
-            let func = language('remember 1+1 if 1 < 0 else 1+2 as two then run run two');
+            let func = expression('remember 1+1 if 1 < 0 else 1+2 as two then run run two');
             expect(func).to.equal(3)
         })
         it('should execute multiple operations and return last element and remember vars from earlier', () => {
-            let func = language('remember space as output then while a > 0 do remember run a - 1 as a also remember run output + a as output also remember run output + bottles as output also remember run output + beer as output', {a: 100})();
+            let func = expression('remember space as output then while a > 0 do remember run a - 1 as a also remember run output + a as output also remember run output + bottles as output also remember run output + beer as output', {a: 100})();
             console.log(func)
             expect(func['a']).to.equal(0)
         })
-        it('should execute multiple operations and return last element and remember vars from earlier', () => {
-            let func = language('remember function do 0 . args + space + bottles + space + beer + space as count then remember run space as output then while a > 0 do remember run a - 1 as a also remember output + run count parameter a as output', {a: 100})();
-            console.log(func)
-            expect(func).to.equal('')
+        // it('should execute multiple operations and return last element and remember vars from earlier', () => {
+        //     let func = expression('remember function do 0 . args + space + bottles + space + beer + space as count then remember run space as output then while a > 0 do remember run a - 1 as a also remember output + run count parameter a as output', {a: 100})();
+        //     console.log(func)
+        //     expect(func).to.equal('')
+        // })
+    })
+
+    describe('while', () => {
+        it('should be able to preform a simple while', () => {
+            let func = expression('function do while a > 0 do remember run a - 1 as a', {a: 5});
+            expect(func()['a']).to.equal(0);
         })
     })
 
-    // describe('while', () => {
-    //     it('should be able to preform a simple while', () => {
-    //         let func = language('function do while a > 0 do remember run a - 1 as a', {a: 5});
-    //         expect(func()['a']).to.equal(0);
-    //     })
-    // })
-
     // describe('99 bottles of beer', () => {
-    //     let func = language('remember run 100 as bottles then remember function do bottles - 1 as bottles as lower then function do while bottles > 0 do run lower then run bottles')
+    //     let func = expression('remember run 100 as bottles then remember function do bottles - 1 as bottles as lower then function do while bottles > 0 do run lower then run bottles')
     //     expect(func).to.equal(0);
     // })
 })

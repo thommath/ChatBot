@@ -24,15 +24,15 @@ func := ! <condition>
 
 
 
-
+V2
 
 S := <expression> | <expression> then <S>
 expression := 
     function do <expression> | 
     while <condition> do <expression>
     remember <expression> as <string> | 
-    <expression> if <condition> else <expression> | 
     <expression> also <expression> | 
+    <expression> if <condition> else <expression> | 
     run <expression> | 
     <expression> <op> <expression> | 
     <list> | 
@@ -40,13 +40,44 @@ expression :=
     number | 
     <var> | 
 
+list := [] | [<listItem>]
+listItem := <expression> | <expression>, <expression>
+
+comp := < | > | <= | => | == | !=
+op := + | - | * | / | .
+
+
+V3
+
+S := <expression> | <expression> then <S>
+expression := 
+    function <expression> | 
+    while <condition> do <expression>
+    remember <expression> as <string> | set <string> to <expression>
+    if <condition> do <expression> else <expression> |
+    <expression> also <expression> |
+    run <expression> | 
+    <expression> <op> <expression> | 
+    <list> | 
+    <string> | 
+    <number> | 
+    <var> | 
+
+list := [] | [<listItem>]
+listItem := <expression> | <expression>, <expression>
+
+comp := < | > | <= | => | == | !=
+op := + | - | * | / | .
+
 
 
 
 # Todo
 Add categories as possible input list
-() 
-remember vars in scope 
+()
+remember vars in scope
 Remember inside remember, while inside while etc.  
 Remember inside remember 
 Remove function 'do'
+Remove language function
+Add quotes for string 

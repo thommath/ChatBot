@@ -66,67 +66,6 @@ const splitAndRun = (f, s, vars, from, to) => f(cleanString(s.slice(from, to)), 
 
 
 
-const isFunction = s => s.indexOf('function') === 0;
-const parseFunction = (s, vars) => {
-    let doIndex = s.indexOf('do');
-    
-    console.log(s.slice(doIndex+3))
-
-    let func = expression(s.slice(doIndex+3), vars);
-
-    return function (...args) {
-        console.log('args', args);
-        return func(args);
-    }
-}
-
-const isRemember = s => s.indexOf('remember') !== -1;
-const parseRemember = (s, vars = {}) => {
-    const asIndex = s.indexOf('as');
-
-    let func = splitAndRun(language, s, vars, 9, asIndex);
-
-    vars[s.slice(asIndex+3)] = func;
-
-    return vars;
-}
-
-const isThen = s => s.indexOf('then') !== -1;
-const parseThen = (s, vars) => {
-    let splitted = s.split('then');
-    let res;
-
-    for (let i = 0; i < splitted.length; i++) {
-        res = splitAndRun(language, splitted[i], vars);
-        if (typeof(res) === 'object') {
-            vars = res;
-        }
-        console.log('arguments from them', vars)
-    }
-    return res;
-}
-const isAlso = s => s.indexOf('also') !== -1;
-const parseAlso = (s, vars) => {
-    let splitted = s.split('also');
-    let res;
-
-    for (let i = 0; i < splitted.length; i++) {
-        res = splitAndRun(language, splitted[i], vars);
-        if (typeof(res) === 'object') {
-            vars = res;
-        }
-    }
-    return res;
-}
-
-
-const language = (s, vars) => {
-    s = preprocess(s);
-    s = cleanString(s);
-
-    return expression(s, vars)
-}
-
 
 const magiduse = (list, s, vars) => {
     s = preprocess(s);
@@ -174,7 +113,6 @@ const expression = (s, vars) => {
 
     if (isOperator(s))
         return parseOperator(s, vars);
-
         
     if (isList(s))
         return parseList(s, vars)
@@ -190,15 +128,69 @@ const expression = (s, vars) => {
         return (acc, elem, i) => i;
     if(s == 'all')
         return (acc, elem, i, all) => all;
-    if(s == 'arguments' || s == 'args')
-        return args => args;
+
     if (isVar(s, vars))
         return parseVar(s, vars);
 
-    if (s == 'space')
-        return () => ' ';
+    if (this[s] !== undefined)
+        return () => this[s];
+    if (s === 'arguments' || s === 'args')
+        return args => args;
     
     return () => s;
+}
+
+const isFunction = s => s.indexOf('function') === 0;
+const parseFunction = (s, vars) => {
+    let doIndex = s.indexOf('do');
+    
+    console.log(s.slice(doIndex+3))
+
+    let func = expression(s.slice(doIndex+3), vars);
+
+    return function (...args) {
+        console.log('args', args);
+        return func(args);
+    }
+}
+
+const isRemember = s => s.indexOf('remember') !== -1;
+const parseRemember = (s, vars = {}) => {
+    const asIndex = s.indexOf('as');
+
+    let func = splitAndRun(expression, s, vars, 9, asIndex);
+
+    vars[s.slice(asIndex+3)] = func;
+
+    return vars;
+}
+
+const isThen = s => s.indexOf('then') !== -1;
+const parseThen = (s, vars) => {
+    let splitted = s.split('then');
+    let res;
+
+    for (let i = 0; i < splitted.length; i++) {
+        res = splitAndRun(expression, splitted[i], vars);
+        if (typeof(res) === 'object') {
+            vars = res;
+        }
+        console.log('arguments from them', vars)
+    }
+    return res;
+}
+const isAlso = s => s.indexOf('also') !== -1;
+const parseAlso = (s, vars) => {
+    let splitted = s.split('also');
+    let res;
+
+    for (let i = 0; i < splitted.length; i++) {
+        res = splitAndRun(expression, splitted[i], vars);
+        if (typeof(res) === 'object') {
+            vars = res;
+        }
+    }
+    return res;
 }
 
 const isWhile = s => s.indexOf('while') === 0;
@@ -206,11 +198,9 @@ const parseWhile = (s, vars) => {
     const doIndex = s.indexOf('do');
     const cond = splitAndRun(condition, s, vars, 6, doIndex);
 
-    // console.log(s.slice(6, doIndex), s.slice(doIndex+3))
-
     return (args) => {
         while(cond(args, vars)) {
-            vars = splitAndRun(language, s, vars, doIndex+3);
+            vars = splitAndRun(expression, s, vars, doIndex+3);
         }
         return vars;
     };
@@ -414,4 +404,3 @@ exports.expression = expression;
 exports.parseIf = parseIf;
 exports.condition = condition;
 exports.magiduse = magiduse;
-exports.language = language;
