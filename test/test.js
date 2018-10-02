@@ -41,8 +41,8 @@ describe('compare', () => {
 })
 describe('expression', () => {
     it('should return a property of variable', () => {
-        let func = expression('property . cur');
-        expect(func(0, {property: 2})).to.equal(2);
+        let func = expression('property . args');
+        expect(func({property: 2})).to.equal(2);
     });
     it('should return a number', () => {
         let func = expression('2');
@@ -96,8 +96,8 @@ describe('expression', () => {
     //     expect(func()).to.equal(0);
     // })
     it('should handle property of', () => {
-        let func = expression('total . cur');
-        expect(func(0, {total: 15})).to.equal(15);
+        let func = expression('total . args');
+        expect(func({total: 15})).to.equal(15);
     })
     it('should run functions', () => {
         let func = expression('run print', {print:() => 'hey'});
@@ -121,7 +121,7 @@ describe('expression', () => {
         expect(func).to.equal(7);
     })
     it('should be able to run multiple expression in succession', () => {
-        let filter = expression('acc < 0');
+        let filter = expression('args < 0');
         let res = expression('run filter . list parameter f', {list: [1, 2, 3, -1, -2], f: filter});
         expect(res.toString()).to.equal('-1,-2')
     })
@@ -162,37 +162,26 @@ describe('func', () => {
     })
 });
 
-describe('magiduse', () => {
-    it('should reduce a list based on input string with default value', () => {
-        let ret = magiduse([{i: [2]}], 'acc + i of elem default list', {});
-        expect(ret[0]).to.equal(2)
-    });
-    it('should replace aliases', () => {
-        let ret = magiduse([{i: [2]}], 'sum i of elem from array', {});
-        expect(ret[0]).to.equal(2)
-    });
-});
-
-describe('aliases', () => {
-    describe('last', () => {
-        it('should return last elem', () => {
-            let ret = magiduse([{bill_date: '2018-09-20'}, {bill_date: '2018-09-10'}], 'last', {});
-            expect(ret.bill_date).to.equal('2018-09-20');
-        })
-    })
-    describe('first', () => {
-        it('should return first elem', () => {
-            let ret = magiduse([{bill_date: '2018-09-20'}, {bill_date: '2018-09-10'}], 'first', {});
-            expect(ret.bill_date).to.equal('2018-09-10');
-        })
-    })
-    describe('sum', () => {
-        it('should sum', () => {
-            let ret = magiduse([{bill_date: '2018-09-20'}, {bill_date: '2018-09-10'}], 'sum date of elem from string', {});
-            expect(ret).to.equal('2018-09-202018-09-10');
-        })
-    })
-})
+// describe('aliases', () => {
+//     describe('last', () => {
+//         it('should return last elem', () => {
+//             let ret = magiduse([{bill_date: '2018-09-20'}, {bill_date: '2018-09-10'}], 'last', {});
+//             expect(ret.bill_date).to.equal('2018-09-20');
+//         })
+//     })
+//     describe('first', () => {
+//         it('should return first elem', () => {
+//             let ret = magiduse([{bill_date: '2018-09-20'}, {bill_date: '2018-09-10'}], 'first', {});
+//             expect(ret.bill_date).to.equal('2018-09-10');
+//         })
+//     })
+//     describe('sum', () => {
+//         it('should sum', () => {
+//             let ret = magiduse([{bill_date: '2018-09-20'}, {bill_date: '2018-09-10'}], 'sum date of elem from string', {});
+//             expect(ret).to.equal('2018-09-202018-09-10');
+//         })
+//     })
+// })
 
 describe('expression', () => {
     describe('remember', () => {

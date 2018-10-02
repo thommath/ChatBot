@@ -111,23 +111,16 @@ const expression = (s, vars) => {
     if (isFunc(s))
         return getFunc(s, vars);
 
+    if (findCompareItem(s) !== undefined)
+        return condition(s, vars);
+
     if (isOperator(s))
         return parseOperator(s, vars);
         
     if (isList(s))
         return parseList(s, vars)
-    if (findCompareItem(s) !== undefined)
-        return condition(s, vars);
     if (!isNaN(Number(s)))
         return () => Number(s);
-    if(s == 'acc') 
-        return (acc, elem) => acc;
-    if(s == 'cur')
-        return (acc, elem) => elem;
-    if(s == 'index')
-        return (acc, elem, i) => i;
-    if(s == 'all')
-        return (acc, elem, i, all) => all;
 
     if (isVar(s, vars))
         return parseVar(s, vars);
@@ -387,13 +380,20 @@ const parseOperator = (s, vars) => {
     if (index === -1) {
         index = s.split('').findIndex(st => operator_prioritized(st));
     }
-    // console.log('parse operator', s, s[index])
+    console.log('parse operator', s, ', operator:', s[index])
     // Apply the operator found on both sides of the expression
-    return (acc, elem, i, all) => {
+    return (args) => {
+        console.log('left', splitAndRun(expression, s, vars, 0, index) (args))
+        console.log('right', splitAndRun(expression, s, vars, index+1) (args))
+        console.log('returns', operator(s[index])
+        (   
+            splitAndRun(expression, s, vars, 0, index) (args),
+            splitAndRun(expression, s, vars, index+1) (args)
+        ))
         return operator(s[index])
         (   
-            splitAndRun(expression, s, vars, 0, index) (acc, elem, i, all),
-            splitAndRun(expression, s, vars, index+1) (acc, elem, i, all)
+            splitAndRun(expression, s, vars, 0, index) (args),
+            splitAndRun(expression, s, vars, index+1) (args)
         );}
 }
 
