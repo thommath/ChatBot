@@ -4,7 +4,7 @@ const dialogflow = require('dialogflow');
 
 class Dialogflow {
     constructor() {
-        process.env.GOOGLE_APPLICATION_CREDENTIALS = './service_account.json';
+//        process.env.GOOGLE_APPLICATION_CREDENTIALS = './service_account.json';
         const projectId = 'regstat-111c1'; //https://dialogflow.com/docs/agents#settings
         const sessionId = 'quickstart-session-id';
         this.languageCode = 'en-US';
