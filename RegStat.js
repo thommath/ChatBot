@@ -43,14 +43,24 @@ class RegStat {
     }
 
     reduceTransactions({reduce}) {
-        console.log(this)
         if (!this.bearer) {
             return this.authenticate();
         }
 
         return this.callApi('transaction')
             .then(data =>
-                parse_reduce.magiduse(data.transaction_list, reduce.stringValue, {})
+                data.transaction_list.reduce(parse_reduce.expression(reduce.stringValue, {}))
+            );
+    }
+
+    expression({expression}) {
+        if (!this.bearer) {
+            return this.authenticate();
+        }
+
+        return this.callApi('transaction')
+            .then(data =>
+                parse_reduce.expression(expression.stringValue, {transactions: data.transaction_list})
             );
     }
 
