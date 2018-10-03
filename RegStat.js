@@ -5,9 +5,9 @@ const parse_reduce = require('./parse_reduce');
 class RegStat {
     constructor(sessionId) {
 //        this.bearer = 'Bearer 323031382D30382D31332031353A31363A35362E3030373434392B30303A3030736C216A2126682D6F34356565657A40266C5E7873707038623879266C673D32387729733D626C37266A282869696F636469';
-        this.url = 'http://localhost:8000';
-        this.client_secret = 'dasdasewq-231eqw43-213esaqeqw';
-        this.client_id = '123453-123432-123431';
+        this.url = 'https://regstat.net';
+        this.client_secret = process.env.REGSTAT_CLIENT_SECRET;
+        this.client_id = process.env.REGSTAT_CLIENT_ID;
         this.sessionId = sessionId;
     }
 
