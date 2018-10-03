@@ -60,6 +60,22 @@ describe('expression', () => {
         let func = expression('i+2/2-1', {i: 2});
         expect(func()).to.equal(2);
     });
+    it('should handle strings', () => {
+        let func = expression('quote hei endquote');
+        expect(func()).to.equal('hei')
+    })
+    it('should handle strings with spaces', () => {
+        let func = expression('quote hei pa deg endquote');
+        expect(func()).to.equal('hei pa deg')
+    })
+    it('should handle strings with special words', () => {
+        let func = expression('quote if function do end while + nothing undefined args endquote');
+        expect(func()).to.equal('if function do end while + nothing undefined args')
+    })
+    it('should handle strings in if', () => {
+        let func = expression('quote hei endquote if 1 else quote bye endquote');
+        expect(func()).to.equal('hei')
+    })
     it('should return a list', () => {
         let func = expression('i+i', {i: [2]});
         expect(func().length).to.equal(2);
@@ -125,7 +141,6 @@ describe('expression', () => {
         let res = expression('run filter . list parameter f', {list: [1, 2, 3, -1, -2], f: filter});
         expect(res.toString()).to.equal('-1,-2')
     })
-
 });
 describe('condition', () => {
     it('should return expression', () => {
@@ -201,6 +216,13 @@ describe('expression', () => {
             let vars = expression('remember run a + 1 as b', {a: 2});
             expect(vars['b']).to.equal(3);
         })
+        it('should remember a function that remembers', () => {
+            let vars = expression('remember function do remember run a + 1 as a as increase', {a: 0});
+            console.log(vars)
+            vars = expression('run increase then remember run run increase as a', vars)();
+            console.log(vars)
+            expect(vars['a']).to.equal(1);
+        })
     })
     describe('function', () => {
         it('should define functions', () => {
@@ -232,6 +254,17 @@ describe('expression', () => {
         })
         it('should execute multiple operations and return last element and remember vars from earlier', () => {
             let func = expression('remember space as output then while a > 0 do remember run a - 1 as a also remember run output + a as output also remember run output + bottles as output also remember run output + beer as output', {a: 100})();
+            console.log(func)
+            expect(func['a']).to.equal(0)
+        })
+        it('Bottles of beer', () => {
+            let func = expression(`
+                remember function do 0 . args + quote  bottles of beer endquote as get string then
+                remember function do remember a - 1 as a as countdown then
+                while a > 0 do
+                    run countdown also 
+                    run print run get string parameter a
+                `, {a: 100, print: console.log})();
             console.log(func)
             expect(func['a']).to.equal(0)
         })

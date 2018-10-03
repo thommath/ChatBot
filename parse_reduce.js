@@ -64,28 +64,40 @@ const cleanString = s => {
 }
 const splitAndRun = (f, s, vars, from, to) => f(cleanString(s.slice(from, to)), vars);
 
+const isInsideQuotes = (s, index) => {
+    let splitted = s.split('quote');
+    let length = splitted[0];
+    
+    if (index < splitted[0].length)
+        return false;
 
+    for (let i = 1; i < splitted.length; i++){
+        if (getIndexOfCorrespondingEnd(s.slice(length), 'quote', 'endquote') > index)
+            return true;
 
-
-const magiduse = (list, s, vars) => {
-    s = preprocess(s);
-
-    let defaultIndex = s.indexOf('default');
-
-    let def = 0;
-    if (defaultIndex !== -1) {
-        switch(s.slice(defaultIndex + 7 + 1)){
-            case 'list': def = [];break;
-            case 'int': def = 0;break;
-            case 'string': def = '';break;
-            case 'object': def = {};break;
-            default: def = expression(s, vars)();
-        }
-        return list.reduce(splitAndRun(expression, s, vars, 0, defaultIndex-1), def);
+        length += splitted[i];
     }
-    return list.reduce(expression(s, vars), def);
+    return false;
 }
 
+const getIndexOfCorrespondingEnd = (s, startString, endString) => {
+    // Find end of quote in string from 'quote hei på deg quote din nisse endquote endquote'
+    // Find end of if in string from 'if 123 < 345 else'
+    let depth = 0;
+    let index = 0;
+    let splitted = s.split(' ')
+    for (let i in splitted){
+        if (splitted[i] === startString)// && !isInsideQuotes(s, index))
+            depth++;
+        if (splitted[i] === endString){//} && !isInsideQuotes(s, index)) {
+            depth--;
+            if (depth <= 0)
+                return index;
+        }
+        index += splitted[i].length + 1;
+    }
+    return -1; // No corresponding end
+}
 
 const expression = (s, vars) => {
     s = cleanString(s);
@@ -123,17 +135,42 @@ const expression = (s, vars) => {
         return () => Number(s);
 
     if (isVar(s, vars))
-        return parseVar(s, vars);
+        return () => parseVar(s, vars);
 
     if (this[s] !== undefined)
         return () => this[s];
     if (s === 'arguments' || s === 'args')
         return args => args;
+
+    if (isQuote(s))
+        return parseQuote(s, vars);
     
     return () => s;
 }
 
-const isFunction = s => s.indexOf('function') === 0;
+const isFunction = s => s.indexOf('function') === 0 && !isInsideQuotes(s, s.indexOf('function'));
+const isThen = s => s.indexOf('then') !== -1 && !isInsideQuotes(s, s.indexOf('then'));
+const isRemember = s => s.indexOf('remember') !== -1 && !isInsideQuotes(s, s.indexOf('remember'));
+const isAlso = s => s.indexOf('also') !== -1 && !isInsideQuotes(s, s.indexOf('also'));
+const isWhile = s => s.indexOf('while') === 0 && !isInsideQuotes(s, s.indexOf('while'));
+const isVar = (s, vars) => {
+    if (!vars)
+        return false;
+    return vars[s]
+}
+const isFunc = s => s.indexOf('run') === 0 && !isInsideQuotes(s, s.indexOf('run'));
+const isIf = s => s.indexOf('if') !== -1 && !isInsideQuotes(s, s.indexOf('if'));
+const isList = s => s[0] == '[' && s.indexOf(']') === s.length -1 && !isInsideQuotes(s, s.indexOf('['));
+const isOperator = s => (s.split('').findIndex(st => operator_not_prioritized(st)) !== -1 && !isInsideQuotes(s, s.split('').findIndex(st => operator_not_prioritized(st))))|| 
+                        (s.split('').findIndex(st => operator_prioritized(st)) !== -1 && !isInsideQuotes(s, s.split('').findIndex(st => operator_prioritized(st))));
+const isQuote = s => s.indexOf('quote') === 0;
+
+const parseQuote = (s, vars) => {
+    // this does not account for anything that is after the quotes end, this code will not be evaluated
+    const endOfQuote = getIndexOfCorrespondingEnd(s, 'quote', 'endquote');
+    return () => s.slice(6, endOfQuote-1);
+}
+
 const parseFunction = (s, vars) => {
     let doIndex = s.indexOf('do');
     
@@ -147,9 +184,8 @@ const parseFunction = (s, vars) => {
     }
 }
 
-const isRemember = s => s.indexOf('remember') !== -1;
 const parseRemember = (s, vars = {}) => {
-    const asIndex = s.indexOf('as');
+    const asIndex = getIndexOfCorrespondingEnd(s, 'remember', 'as');
 
     let func = splitAndRun(expression, s, vars, 9, asIndex);
 
@@ -158,7 +194,6 @@ const parseRemember = (s, vars = {}) => {
     return vars;
 }
 
-const isThen = s => s.indexOf('then') !== -1;
 const parseThen = (s, vars) => {
     let splitted = s.split('then');
     let res;
@@ -172,7 +207,6 @@ const parseThen = (s, vars) => {
     }
     return res;
 }
-const isAlso = s => s.indexOf('also') !== -1;
 const parseAlso = (s, vars) => {
     let splitted = s.split('also');
     let res;
@@ -186,7 +220,6 @@ const parseAlso = (s, vars) => {
     return res;
 }
 
-const isWhile = s => s.indexOf('while') === 0;
 const parseWhile = (s, vars) => {
     const doIndex = s.indexOf('do');
     const cond = splitAndRun(condition, s, vars, 6, doIndex);
@@ -200,20 +233,11 @@ const parseWhile = (s, vars) => {
 
 }
 
-const isVar = (s, vars) => {
-    if (!vars)
-        return false;
-    return vars[s]
-}
+
 const parseVar = (s, vars) => {
-    let splitted = s.split(' ')
-    if (vars[s]) {
-        return () => vars[s];
-    }
     return vars[s];
 }
 
-const isFunc = s => s.indexOf('run') === 0 || s.indexOf('parameter') > 0;
 const getFunc = (s, vars) => {
     // if (s[0] == '!')
     //     return (acc, elem, i, all) => !splitAndRun(condition, s, vars, 1)(acc, elem, i, all);
@@ -252,25 +276,6 @@ const getFunc = (s, vars) => {
     )
 }
 
-const isIf = s => s.indexOf('if') !== -1;
-const findCorrespondingElse = s => {
-    let ifs = 0;
-    let index = 0;
-    let splitted = s.split(' ')
-    for (let i in splitted){
-        let str = splitted[i];
-        if (str == 'if') {
-            ifs += 1;
-        } else if (str == 'else') {
-            ifs -= 1;
-            if (ifs <= 0) {
-                return index;
-            }
-        }
-        index += str.length + 1;
-    }
-    return -1;
-}
 const parseIf = (s, vars) => {
     s = cleanString(s);
     let ifIndex = s.indexOf('if');
@@ -278,7 +283,7 @@ const parseIf = (s, vars) => {
     if (ifIndex === -1) {
         return expression(s, vars);
     }
-    let elseIndex = findCorrespondingElse(s);
+    let elseIndex = getIndexOfCorrespondingEnd(s, 'if', 'else');
 
     return (acc, elem, i, all) => {
         // Default is return acc
@@ -350,7 +355,6 @@ const compare = s => {
     }
 }
 
-const isList = s => s[0] == '[' && s.indexOf(']') === s.length -1;
 const parseList = (s, vars) => (acc, elem, i, all) => s.slice(1, s.length-1).split(', ').map(e => expression(e, vars)(acc, elem, i, all));
 
 const operator_prioritized = s => s == '*' || s == '/' || s == '.';
@@ -373,7 +377,6 @@ const operator = s => {
     }
 }
 
-const isOperator = s => s.split('').findIndex(st => operator_not_prioritized(st)) !== -1 || s.split('').findIndex(st => operator_prioritized(st)) !== -1;
 const parseOperator = (s, vars) => {
     // contains operator?
     let index = s.split('').findIndex(st => operator_not_prioritized(st));
@@ -382,13 +385,14 @@ const parseOperator = (s, vars) => {
     }
     console.log('parse operator', s, ', operator:', s[index])
     // Apply the operator found on both sides of the expression
+    // should be ...args
     return (args) => {
         console.log('left', splitAndRun(expression, s, vars, 0, index) (args))
         console.log('right', splitAndRun(expression, s, vars, index+1) (args))
         console.log('returns', operator(s[index])
         (   
-            splitAndRun(expression, s, vars, 0, index) (args),
-            splitAndRun(expression, s, vars, index+1) (args)
+            splitAndRun(expression, s, vars, 0, index),
+            splitAndRun(expression, s, vars, index+1)
         ))
         return operator(s[index])
         (   
@@ -403,4 +407,3 @@ exports.operator = operator;
 exports.expression = expression;
 exports.parseIf = parseIf;
 exports.condition = condition;
-exports.magiduse = magiduse;
