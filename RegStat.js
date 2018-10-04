@@ -61,14 +61,14 @@ class RegStat {
 
         let response = this.callApi('transaction')
             .then(data =>
-                parse_reduce.expression(expression.stringValue, {transactions: data.transaction_list})
+                parse_reduce.expression(expression.stringValue, Object.assign(this.vars, {transactions: data.transaction_list}))
             );
 
         if (typeof(response) == 'object') {
             this.vars = Object.assign(this.vars, response);
         }
 
-        return this.response;
+        return response;
     }
 
     callApi(path) {
