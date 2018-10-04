@@ -9,6 +9,7 @@ class RegStat {
         this.client_secret = process.env.REGSTAT_CLIENT_SECRET;
         this.client_id = process.env.REGSTAT_CLIENT_ID;
         this.sessionId = sessionId;
+        this.vars = {};
     }
 
     authenticate() {
@@ -58,10 +59,16 @@ class RegStat {
             return this.authenticate();
         }
 
-        return this.callApi('transaction')
+        let response = this.callApi('transaction')
             .then(data =>
                 parse_reduce.expression(expression.stringValue, {transactions: data.transaction_list})
             );
+
+        if (typeof(response) == 'object') {
+            this.vars = Object.assign(this.vars, response);
+        }
+
+        return this.response;
     }
 
     callApi(path) {
