@@ -60,19 +60,19 @@ class RegStat {
             return this.authenticate();
         }
 
-        let response = this.callApi('transaction')
+        return this.callApi('transaction')
             .then(data =>
-                parse_reduce.expression(expression.stringValue, Object.assign(this.vars, {transactions: data.transaction_list}))
+                {
+                    let exp = parse_reduce.expression(expression.stringValue, Object.assign(this.vars, {transactions: data.transaction_list}));
+                    
+                    if (typeof(response) == 'object') {
+                        this.vars = Object.assign(this.vars, response);
+                    }
+                    if (typeof(response) == 'function')
+                        return response();
+                    return response;
+                }
             );
-
-        if (typeof(response) == 'object') {
-            this.vars = Object.assign(this.vars, response);
-        }
-        if (typeof(response) == 'function') {
-            response = response();
-        }
-
-        return response;
     }
 
     callApi(path) {
