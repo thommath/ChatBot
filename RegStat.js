@@ -100,7 +100,7 @@ class RegStat {
             .then(data =>
                 db.save(data.user.email, this.vars)
             ).then(() => 'Success')
-            .catch((err) => err);
+            .catch((err) => {console.error(err); return 'error'});
     }
     load() {
         if (!this.bearer) {
@@ -111,7 +111,7 @@ class RegStat {
             .then(data =>
                 db.load(data.user.email)
             ).then((res) => {this.vars = res; return 'Success'})
-            .catch((err) => err);
+            .catch((err) => {console.error(err); return 'error'});
     }
 }
 
