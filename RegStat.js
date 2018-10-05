@@ -95,7 +95,7 @@ class RegStat {
 
         return this.callApi('user')
             .then(data =>
-                db.save(data.user.email, vars)
+                db.save(data.user.email, this.vars)
             ).then(() => 'Success')
             .catch((err) => err);
     }
@@ -106,8 +106,8 @@ class RegStat {
 
         return this.callApi('user')
             .then(data =>
-                db.load(data.user.email, vars)
-            ).then(() => 'Success')
+                db.load(data.user.email)
+            ).then((res) => {this.vars = res; return 'Success'})
             .catch((err) => err);
     }
 }
