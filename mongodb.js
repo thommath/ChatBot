@@ -28,35 +28,37 @@ exports.close = function(client) {
 }
 
 exports.save = function(id, data) {
-    const { db, client } = exports.getdb();
-    // Get the documents collection
-    const collection = db.collection('user');
-    // Insert some documents
-    return new Promise((res, rej) => {
-        collection.insert({
-            id, data
-        }, function(err, result) {
-            client.close();
-            if (err !== null)
-                rej(err)
-            else
-                res(result)
+    return exports.getdb().then(({client, db}) => {
+        // Get the documents collection
+        const collection = db.collection('user');
+        // Insert some documents
+        return new Promise((res, rej) => {
+            collection.insert({
+                id, data
+            }, function(err, result) {
+                client.close();
+                if (err !== null)
+                    rej(err)
+                else
+                    res(result)
+            })
         })
     })
 }
 
 exports.load = function(id) {
-    const { db, client } = exports.getdb();
-    // Get the documents collection
-    const collection = db.collection('user');
-    // Insert some documents
-    return new Promise((res, rej) => {
-        collection.find({id}, function(err, result) {
-            client.close();
-            if (err !== null)
-                rej(err)
-            else
-                res(result)
+    return exports.getdb().then(({client, db}) => {
+        // Get the documents collection
+        const collection = db.collection('user');
+        // Insert some documents
+        return new Promise((res, rej) => {
+            collection.find({id}, function(err, result) {
+                client.close();
+                if (err !== null)
+                    rej(err)
+                else
+                    res(result)
+            })
         })
     })
 }
