@@ -65,7 +65,7 @@ class RegStat {
                 {
                     let exp = parse_reduce.expression(expression.stringValue, Object.assign(this.vars, {transactions: data.transaction_list}));
                     
-                    if (typeof(exp) == 'object' && expression.indexOf('remember') !== -1) {
+                    if (typeof(exp) == 'object' && expression.stringValue.indexOf('remember') !== -1) {
                         this.vars = Object.assign(this.vars, exp);
                     }
                     if (typeof(exp) == 'function')
