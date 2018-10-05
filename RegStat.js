@@ -65,12 +65,12 @@ class RegStat {
                 {
                     let exp = parse_reduce.expression(expression.stringValue, Object.assign(this.vars, {transactions: data.transaction_list}));
                     
-                    if (typeof(response) == 'object') {
-                        this.vars = Object.assign(this.vars, response);
+                    if (typeof(exp) == 'object' && expression.indexOf('remember') !== -1) {
+                        this.vars = Object.assign(this.vars, exp);
                     }
-                    if (typeof(response) == 'function')
-                        return response();
-                    return response;
+                    if (typeof(exp) == 'function')
+                        return exp();
+                    return exp;
                 }
             );
     }
