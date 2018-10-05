@@ -390,10 +390,10 @@ const parseOperator = (s, vars) => {
         // console.log('left', splitAndRun(expression, s, vars, 0, index) (args))
         // console.log('right', splitAndRun(expression, s, vars, index+1) (args))
         // console.log('returns', operator(s[index])
-        (   
-            splitAndRun(expression, s, vars, 0, index),
-            splitAndRun(expression, s, vars, index+1)
-        ))
+        // (   
+        //     splitAndRun(expression, s, vars, 0, index),
+        //     splitAndRun(expression, s, vars, index+1)
+        // ))
         return operator(s[index])
         (   
             splitAndRun(expression, s, vars, 0, index) (args),
