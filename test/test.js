@@ -115,6 +115,19 @@ describe('expression', () => {
         let func = expression('total . args');
         expect(func({total: 15})).to.equal(15);
     })
+    it('should handle property of', () => {
+        let func = expression('total . obj', {obj: {total: 15}});
+        expect(func()).to.equal(15);
+    })
+    it('should handle property of', () => {
+        let func = expression('total . 0 . obj', {obj: [{total: 15}]});
+        expect(func()).to.equal(15);
+    })
+    it('should handle property of', () => {
+        let func = expression('remember funtion do total . 0 . obj as total', {obj: [{total: 15}]});
+        let res = expression('run total', func)
+        expect(func).to.equal(15);
+    })
     it('should run functions', () => {
         let func = expression('run print', {print:() => 'hey'});
         expect(func()).to.equal('hey');

@@ -68,6 +68,9 @@ class RegStat {
         if (typeof(response) == 'object') {
             this.vars = Object.assign(this.vars, response);
         }
+        if (typeof(response) == 'function') {
+            response = response();
+        }
 
         return response;
     }
