@@ -174,12 +174,12 @@ const parseQuote = (s, vars) => {
 const parseFunction = (s, vars) => {
     let doIndex = s.indexOf('do');
     
-    console.log(s.slice(doIndex+3))
+    // console.log(s.slice(doIndex+3))
 
     let func = expression(s.slice(doIndex+3), vars);
 
     return function (...args) {
-        console.log('args', args);
+        // console.log('args', args);
         return func(args);
     }
 }
@@ -203,7 +203,7 @@ const parseThen = (s, vars) => {
         if (typeof(res) === 'object') {
             vars = res;
         }
-        console.log('arguments from them', vars)
+        // console.log('arguments from them', vars)
     }
     return res;
 }
@@ -383,13 +383,13 @@ const parseOperator = (s, vars) => {
     if (index === -1) {
         index = s.split('').findIndex(st => operator_prioritized(st));
     }
-    console.log('parse operator', s, ', operator:', s[index])
+    // console.log('parse operator', s, ', operator:', s[index])
     // Apply the operator found on both sides of the expression
     // should be ...args
     return (args) => {
-        console.log('left', splitAndRun(expression, s, vars, 0, index) (args))
-        console.log('right', splitAndRun(expression, s, vars, index+1) (args))
-        console.log('returns', operator(s[index])
+        // console.log('left', splitAndRun(expression, s, vars, 0, index) (args))
+        // console.log('right', splitAndRun(expression, s, vars, index+1) (args))
+        // console.log('returns', operator(s[index])
         (   
             splitAndRun(expression, s, vars, 0, index),
             splitAndRun(expression, s, vars, index+1)

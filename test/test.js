@@ -236,6 +236,13 @@ describe('expression', () => {
             console.log(vars)
             expect(vars['a']).to.equal(1);
         })
+        it('should run reduce with remembered function', () => {
+            let vars = expression('remember function do 0 . args + total . 1 . args as reduceSum', {transactions: [{total: 100}, {total: 50}, {total: -25}]});
+            console.log(vars)
+            vars = expression('run reduce . transactions parameter reduceSum parameter 0', vars);
+            console.log(vars)
+            expect(vars).to.equal(125);
+        })
     })
     describe('function', () => {
         it('should define functions', () => {
