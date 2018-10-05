@@ -1,6 +1,7 @@
 const request = require('request-promise-native');
 const sha256 = require('sha256');
 const parse_reduce = require('./parse_reduce');
+const db = require('./mongodb');
 
 class RegStat {
     constructor(sessionId) {
@@ -87,6 +88,28 @@ class RegStat {
         return `Thank you, I'll remember that!`;
     }
 
+    save() {
+        if (!this.bearer) {
+            return this.authenticate();
+        }
+
+        return this.callApi('user')
+            .then(data =>
+                db.save(data.user.email, vars)
+            ).then(() => 'Success')
+            .catch((err) => err);
+    }
+    load() {
+        if (!this.bearer) {
+            return this.authenticate();
+        }
+
+        return this.callApi('user')
+            .then(data =>
+                db.load(data.user.email, vars)
+            ).then(() => 'Success')
+            .catch((err) => err);
+    }
 }
 
 exports.RegStat = RegStat;
