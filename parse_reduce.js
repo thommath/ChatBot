@@ -1,5 +1,24 @@
 
 
+
+
+class Environement{
+
+    constructor(vars = {}) {
+        this.vars = vars;
+    }
+
+    setVars(vars) {
+        this.vars = vars;
+    }
+    getVars() {
+        return this.vars;
+    }
+    getFunction(s) {
+        return expression(s, this.vars);
+    }
+}
+
 const aliases = {
     'average': 'avg',
     'avg': 'sum total of elem / length',
@@ -62,7 +81,10 @@ const cleanString = s => {
     }
     return s;
 }
-const splitAndRun = (f, s, vars, from, to) => f(cleanString(s.slice(from, to)), vars);
+const splitAndRun = (f, s, vars, from, to) => {
+    console.log('running: ', s.slice(from, to), 'on', f.name);
+    return f(cleanString(s.slice(from, to)), vars)
+};
 
 const isInsideQuotes = (s, index) => {
     let splitted = s.split('quote');
@@ -117,11 +139,11 @@ const expression = (s, vars) => {
     if (isRemember(s))
         return parseRemember(s, vars);
 
-    if (isIf(s))
-        return parseIf(s, vars);
-
     if (isFunc(s))
         return getFunc(s, vars);
+
+    if (isIf(s))
+        return parseIf(s, vars);
 
     if (findCompareItem(s) !== undefined)
         return condition(s, vars);
@@ -131,13 +153,16 @@ const expression = (s, vars) => {
         
     if (isList(s))
         return parseList(s, vars)
+
     if (!isNaN(Number(s)))
         return () => Number(s);
 
     if (isVar(s, vars))
         return () => parseVar(s, vars);
 
-    if (this[s] !== undefined)
+    // TODO: Add function to parse numbers
+
+    if (this[s] !== undefined) // REMOVE NOT SAFE, it can refer to environement variables...
         return () => this[s];
     if (s === 'arguments' || s === 'args')
         return args => args;
@@ -150,13 +175,13 @@ const expression = (s, vars) => {
 
 const isFunction = s => s.indexOf('function') === 0 && !isInsideQuotes(s, s.indexOf('function'));
 const isThen = s => s.indexOf('then') !== -1 && !isInsideQuotes(s, s.indexOf('then'));
-const isRemember = s => s.indexOf('remember') !== -1 && !isInsideQuotes(s, s.indexOf('remember'));
+const isRemember = s => s.indexOf('remember') === 0 && !isInsideQuotes(s, s.indexOf('remember'));
 const isAlso = s => s.indexOf('also') !== -1 && !isInsideQuotes(s, s.indexOf('also'));
 const isWhile = s => s.indexOf('while') === 0 && !isInsideQuotes(s, s.indexOf('while'));
 const isVar = (s, vars) => {
     if (!vars)
         return false;
-    return vars[s]
+    return vars[s] !== undefined
 }
 const isFunc = s => s.indexOf('run') === 0 && !isInsideQuotes(s, s.indexOf('run'));
 const isIf = s => s.indexOf('if') !== -1 && !isInsideQuotes(s, s.indexOf('if'));
@@ -176,10 +201,14 @@ const parseFunction = (s, vars) => {
     
     // console.log(s.slice(doIndex+3))
 
-    let func = expression(s.slice(doIndex+3), vars);
-
+    
     return function (...args) {
-        // console.log('args', args);
+        console.log('arguments in to parseFunction', args);
+        console.log('string to parse:', s.slice(doIndex+3))
+        let func = expression(s.slice(doIndex+3), vars);
+        if(!func)
+            throw "Expression is not an function"
+        console.log('f', func.toString(), func)
         return func(args);
     }
 }
@@ -187,11 +216,11 @@ const parseFunction = (s, vars) => {
 const parseRemember = (s, vars = {}) => {
     const asIndex = getIndexOfCorrespondingEnd(s, 'remember', 'as');
 
-    let func = splitAndRun(expression, s, vars, 9, asIndex);
-
-    vars[s.slice(asIndex+3)] = func;
-
-    return vars;
+    return () => {
+        let func = splitAndRun(expression, s, vars, 9, asIndex);    
+        vars[s.slice(asIndex+3)] = func;
+        return func;
+    };
 }
 
 const parseThen = (s, vars) => {
@@ -200,9 +229,9 @@ const parseThen = (s, vars) => {
 
     for (let i = 0; i < splitted.length; i++) {
         res = splitAndRun(expression, splitted[i], vars);
-        if (typeof(res) === 'object') {
-            vars = res;
-        }
+        // if (typeof(res) === 'object') {
+        //     vars = res;
+        // }
         // console.log('arguments from them', vars)
     }
     return res;
@@ -225,10 +254,11 @@ const parseWhile = (s, vars) => {
     const cond = splitAndRun(condition, s, vars, 6, doIndex);
 
     return (args) => {
+        let ret;
         while(cond(args, vars)) {
-            vars = splitAndRun(expression, s, vars, doIndex+3);
+            ret = splitAndRun(expression, s, vars, doIndex+3);
         }
-        return vars;
+        return ret;
     };
 
 }
@@ -247,7 +277,6 @@ const getFunc = (s, vars) => {
     if (s.indexOf('run') === 0)
         s = s.slice(4);
 
-
     let params = [];
     let to = s.length;
     if (s.indexOf('parameter') >= 0) {
@@ -261,14 +290,22 @@ const getFunc = (s, vars) => {
 
     let func = splitAndRun(expression, s, vars, 0, to);
 
+    try {
+        if(typeof(func()) === 'function'){
+            func = func();
+        }
+    } catch (error) {
+        
+    }
+
     // Get context 
     let context = undefined;
     if (s.indexOf('.') !== -1) {
         context = splitAndRun(expression, s, vars, s.indexOf('.')+1, to)();
-        func = func();
+        // func = func();
     }
 
-    // console.log('applying ', func, 'on', context, 'with', params)
+    console.log('applying ', func, 'on', context, 'with', params)
 
     return func.apply(
         context,
@@ -387,6 +424,7 @@ const parseOperator = (s, vars) => {
     // Apply the operator found on both sides of the expression
     // should be ...args
     return (args) => {
+        // console.log(s)
         // console.log('left', splitAndRun(expression, s, vars, 0, index) (args))
         // console.log('right', splitAndRun(expression, s, vars, index+1) (args))
         // console.log('returns', operator(s[index])
@@ -394,8 +432,9 @@ const parseOperator = (s, vars) => {
         //     splitAndRun(expression, s, vars, 0, index),
         //     splitAndRun(expression, s, vars, index+1)
         // ))
+        console.log('arguments on operator', args)
         return operator(s[index])
-        (   
+        (
             splitAndRun(expression, s, vars, 0, index) (args),
             splitAndRun(expression, s, vars, index+1) (args)
         );}
@@ -407,3 +446,4 @@ exports.operator = operator;
 exports.expression = expression;
 exports.parseIf = parseIf;
 exports.condition = condition;
+exports.Environement = Environement;

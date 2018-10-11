@@ -3,7 +3,7 @@ var expect = require('chai').expect
   , foo = 'bar'
   , beverages = { tea: [ 'chai', 'matcha', 'oolong' ] };
 
-const { operator, compare, parseIf, condition, magiduse, expression } = require('../parse_reduce');
+const { operator, compare, parseIf, condition, magiduse, expression, Environement } = require('../parse_reduce');
 
 
   describe('operator', () => {
@@ -111,38 +111,39 @@ describe('expression', () => {
     //     let func = expression('1 if run not parameter run 1 else 0', {not: (a) => !a});
     //     expect(func()).to.equal(0);
     // })
-    it('should handle property of', () => {
+    it('should handle property of on parameters', () => {
         let func = expression('total . args');
         expect(func({total: 15})).to.equal(15);
     })
-    it('should handle property of', () => {
+    it('should handle property of vars', () => {
         let func = expression('total . obj', {obj: {total: 15}});
         expect(func()).to.equal(15);
     })
-    it('should handle property of', () => {
+    it('should handle property of var with list', () => {
         let func = expression('total . 0 . obj', {obj: [{total: 15}]});
         expect(func()).to.equal(15);
     })
-    it('should handle property of', () => {
-        let func = expression('remember funtion do total . 0 . obj as total', {obj: [{total: 15}]});
-        let res = expression('run total', func)
-        expect(func).to.equal(15);
+    it('should handle property of and remember functions', () => {
+        let env = new Environement({obj: [{total: 15}]});
+        env.getFunction('remember function do total . 0 . obj as get total')();
+        let res = env.getFunction('run get total');
+        expect(res).to.equal(15);
     })
     it('should run functions', () => {
         let func = expression('run print', {print:() => 'hey'});
-        expect(func()).to.equal('hey');
+        expect(func).to.equal('hey');
     })
     it('should run functions with arguments', () => {
-        let func = expression('run run printParam parameter Thomas', {printParam:(e) => 'hey ' + e});
+        let func = expression('run printParam parameter Thomas', {printParam:(e) => 'hey ' + e});
         expect(func).to.equal('hey Thomas');
     })
     
     it('should run functions with arguments', () => {
-        let func = expression('run run welcome parameter Thomas parameter Carl', {welcome:(a, b) => `Welcome ${a} and ${b}`});
+        let func = expression('run welcome parameter Thomas parameter Carl', {welcome:(a, b) => `Welcome ${a} and ${b}`});
         expect(func).to.equal('Welcome Thomas and Carl');
     })
     it('should run functions with arguments', () => {
-        let func = expression('run run welcome parameter Thomas parameter Carl', {welcome:(a, b) => `Welcome ${a} and ${b}`});
+        let func = expression('run welcome parameter Thomas parameter Carl', {welcome:(a, b) => `Welcome ${a} and ${b}`});
         expect(func).to.equal('Welcome Thomas and Carl');
     })
     it('should run reduce on list from vars with function from vars', () => {
@@ -214,34 +215,41 @@ describe('func', () => {
 describe('expression', () => {
     describe('remember', () => {
         it('should remember expression or result', () => {
-            let vars = expression('remember 1 as one');
-            expect(vars['one']()).to.equal(1);
+            let env = new Environement();
+            env.getFunction('remember 1 as one')();
+            expect(env.getVars()['one']()).to.equal(1);
         })
         it('should remember result of expression', () => {
-            let vars = expression('remember 1 + 1 as one');
-            expect(vars['one']()).to.equal(2);
+            let env = new Environement();
+            env.getFunction('remember 1 + 1 as one')();
+            expect(env.getVars()['one']()).to.equal(2);
         })
         it('should remember complex functions', () => {
-            let vars = expression('remember function do a + 0 . args as complex', {a: 2});
-            expect(vars['complex'](2)).to.equal(4);
+            let env = new Environement({a: 2});
+            env.getFunction('remember function do a + 0 . args as complex')();
+            expect(env.getVars()['complex'](2)).to.equal(4);
         })
         it('should remember overwrite', () => {
-            let vars = expression('remember run a + 1 as b', {a: 2});
-            expect(vars['b']).to.equal(3);
+            let env = new Environement({a: 2});
+            env.getFunction('remember run a + 1 as a')();
+            expect(env.getVars()['a']).to.equal(3);
         })
         it('should remember a function that remembers', () => {
-            let vars = expression('remember function do remember run a + 1 as a as increase', {a: 0});
-            console.log(vars)
-            vars = expression('run increase then remember run run increase as a', vars)();
-            console.log(vars)
-            expect(vars['a']).to.equal(1);
+            let env = new Environement({var: 0});
+            env.getFunction('remember function do remember run var + 1 as var as increase')();
+            console.log(env.getVars())
+            env.getFunction('run increase');
+            env.getFunction('run increase');
+            env.getFunction('run increase');
+
+            expect(env.getVars()['var']).to.equal(3);
         })
         it('should run reduce with remembered function', () => {
-            let vars = expression('remember function do 0 . args + total . 1 . args as reduceSum', {transactions: [{total: 100}, {total: 50}, {total: -25}]});
-            console.log(vars)
-            vars = expression('run reduce . transactions parameter reduceSum parameter 0', vars);
-            console.log(vars)
-            expect(vars).to.equal(125);
+            let env = new Environement({transactions: [{total: 100}, {total: 50}, {total: -25}]});
+            env.getFunction('remember function do 0 . args + total . 1 . args as reduceSum')();
+            console.log(env.getVars())
+            let res = env.getFunction('run reduce . transactions parameter reduceSum parameter 0');
+            expect(res).to.equal(125);
         })
     })
     describe('function', () => {
@@ -265,30 +273,34 @@ describe('expression', () => {
 
     describe('then and also', () => {
         it('should execute multiple operations and return last element and remember vars from earlier with then', () => {
-            let func = expression('remember run 1+1 as two then run two');
+            let env = new Environement();
+            let func = env.getFunction('run remember run 1+1 as two then run two');
+            console.log(env.getVars())
             expect(func).to.equal(2)
         })
         it('should execute multiple operations and return last element and remember vars from earlier with also', () => {
-            let func = expression('remember 1+1 if 1 < 0 else 1+2 as two then run run two');
+            let env = new Environement();
+            let func = env.getFunction('run remember run 1+1 if 1 < 0 else 1+2 as two then run two');
+            console.log(env.getVars())
             expect(func).to.equal(3)
         })
-        it('should execute multiple operations and return last element and remember vars from earlier', () => {
-            let func = expression('remember space as output then while a > 0 do remember run a - 1 as a also remember run output + a as output also remember run output + bottles as output also remember run output + beer as output', {a: 100})();
-            console.log(func)
-            expect(func['a']).to.equal(0)
-        })
-        it('Bottles of beer', () => {
-            let func = expression(`
-                remember function do 0 . args + quote  bottles of beer endquote as get string then
-                remember function do remember a - 1 as a as countdown then
-                while a > 0 do
-                    run countdown also 
-                    run print run get string parameter a
-                `, {a: 100, print: console.log})();
-            console.log(func)
-            expect(func['a']).to.equal(0)
-        })
         // it('should execute multiple operations and return last element and remember vars from earlier', () => {
+        //     let func = expression('remember space as output then while a > 0 do remember run a - 1 as a also remember run output + a as output also remember run output + bottles as output also remember run output + beer as output', {a: 100})();
+        //     console.log(func)
+        //     expect(func['a']).to.equal(0)
+        // })
+        // it('Bottles of beer', () => {
+        //     let func = expression(`
+        //         remember function do 0 . args + quote  bottles of beer endquote as get string then
+        //         remember function do remember a - 1 as a as countdown then
+        //         while a > 0 do
+        //             run countdown also 
+        //             run print run get string parameter a
+        //         `, {a: 100, print: console.log})();
+        //     console.log(func)
+        //     expect(func['a']).to.equal(0)
+        // })
+        // // it('should execute multiple operations and return last element and remember vars from earlier', () => {
         //     let func = expression('remember function do 0 . args + space + bottles + space + beer + space as count then remember run space as output then while a > 0 do remember run a - 1 as a also remember output + run count parameter a as output', {a: 100})();
         //     console.log(func)
         //     expect(func).to.equal('')
@@ -297,8 +309,12 @@ describe('expression', () => {
 
     describe('while', () => {
         it('should be able to preform a simple while', () => {
-            let func = expression('function do while a > 0 do remember run a - 1 as a', {a: 5});
-            expect(func()['a']).to.equal(0);
+            let env = new Environement({var: 10});
+            env.getFunction('remember function do remember run var - 1 as var as increase')();
+            
+            console.log(env.getVars())
+            env.getFunction('function do while var > 0 do run increase')();
+            expect(env.getVars()['var']).to.equal(0);
         })
     })
 
