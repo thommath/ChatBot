@@ -35,5 +35,17 @@ describe('RegStat', () => {
                     expect(response).to.equal(4);
                 })
         })
+        it('should remember variables', () => {
+            let rs = new RegStat();
+            rs.bearer = 'we';
+            rs.callApi = () => new Promise(res => res({transactions: [{total: -200}]}));
+            
+            return rs.expression({expression: {stringValue: 'remember run 2+2 as four'}})
+                .then(response => 
+                    rs.expression({expression: {stringValue: 'run four'}}))
+                .then(response => {
+                    expect(response).to.equal(4);
+                })
+        })
     })
 })

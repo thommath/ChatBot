@@ -9,7 +9,7 @@ class Environement{
     }
 
     setVars(vars) {
-        this.vars = vars;
+        this.vars = Object.assign(this.vars, vars);
     }
     getVars() {
         return this.vars;

@@ -10,7 +10,7 @@ class RegStat {
         this.client_secret = process.env.REGSTAT_CLIENT_SECRET;
         this.client_id = process.env.REGSTAT_CLIENT_ID;
         this.sessionId = sessionId;
-        this.vars = {};
+        this.env = new parse_reduce.Environement();
     }
 
     authenticate() {
@@ -63,11 +63,9 @@ class RegStat {
         return this.callApi('transaction')
             .then(data =>
                 {
-                    let exp = parse_reduce.expression(expression.stringValue, Object.assign(this.vars, {transactions: data.transaction_list}));
+                    this.env.setVars(data);
+                    let exp = this.env.getFunction(expression.stringValue);
                     
-                    if (typeof(exp) == 'object' && expression.stringValue.indexOf('remember') !== -1) {
-                        this.vars = Object.assign(this.vars, exp);
-                    }
                     if (typeof(exp) == 'function')
                         return exp();
                     return exp;
@@ -98,7 +96,7 @@ class RegStat {
 
         return this.callApi('user')
             .then(data =>
-                db.save(data.user.email, this.vars)
+                db.save(data.user.email, this.env.getVars())
             ).then(() => 'Success')
             .catch((err) => {console.error(err); return 'error'});
     }
@@ -110,7 +108,7 @@ class RegStat {
         return this.callApi('user')
             .then(data =>
                 db.load(data.user.email)
-            ).then((res) => {this.vars = res; return 'Success'})
+            ).then((res) => {this.env.setVars(res); return 'Success'})
             .catch((err) => {console.error(err); return 'error'});
     }
 }
