@@ -63,9 +63,9 @@ class RegStat {
         return this.callApi('transaction')
             .then(data =>
                 {
-
-                    // TODO convert all number fields to int
-                    data.transaction_list = data.transaction_list.map(e => Object.assign(e, {total: Number.parseFloat(e.total)}))
+                    if (data.transaction_list)
+                        // TODO convert all number fields to int
+                        data.transaction_list = data.transaction_list.map(e => Object.assign(e, {total: Number.parseFloat(e.total)}))
 
                     this.env.setVars(data);
 
