@@ -28,9 +28,9 @@ describe('RegStat', () => {
         it('should get transactions as variable', () => {
             let rs = new RegStat();
             rs.bearer = 'we';
-            rs.callApi = () => new Promise(res => res({transactions: [{total: -200}]}));
+            rs.callApi = () => new Promise(res => res({transaction_list: [{total: -200}]}));
             
-            return rs.expression({expression: {stringValue: 'length . transactions'}})
+            return rs.expression({expression: {stringValue: 'length . transaction_list'}})
                 .then(response => {
                     expect(response).to.equal(1);
                 })
@@ -38,11 +38,11 @@ describe('RegStat', () => {
         it('should sum transactions', () => {
             let rs = new RegStat();
             rs.bearer = 'we';
-            rs.callApi = () => new Promise(res => res({transactions: [{total: -200}, {total: 100}]}));
+            rs.callApi = () => new Promise(res => res({transaction_list: [{total: -200}, {total: 100}]}));
             
             return rs.expression({expression: {stringValue: 'remember function do 0 . args + total . 1 . args as reduceSum'}})
                 .then(response => {
-                    return rs.expression({expression: {stringValue: 'run reduce . transactions parameter reduceSum parameter 0'}});
+                    return rs.expression({expression: {stringValue: 'run reduce . transaction_list parameter reduceSum parameter 0'}});
                 })
                 .then(response => {
                     expect(response).to.equal(-100);
@@ -64,13 +64,23 @@ describe('RegStat', () => {
         it('should remember variables', () => {
             let rs = new RegStat();
             rs.bearer = 'we';
-            rs.callApi = () => new Promise(res => res({transactions: [{total: -200}]}));
+            rs.callApi = () => new Promise(res => res({transaction_list: [{total: -200}]}));
             
             return rs.expression({expression: {stringValue: 'remember run 2+2 as four'}})
                 .then(response => 
                     rs.expression({expression: {stringValue: 'run four'}}))
                 .then(response => {
                     expect(response).to.equal(4);
+                })
+        })
+        it('should be able to send function into reduce', () => {
+            let rs = new RegStat();
+            rs.bearer = 'we';
+            rs.callApi = () => new Promise(res => res({transaction_list: [{total: -200}, {total: 100}, {total: 50}]}));
+            
+            return rs.expression({expression: {stringValue: 'run reduce . transaction_list parameter function do 0 . args + total . 1 . args parameter 0'}})
+                .then(response => {
+                    expect(response).to.equal(-50);
                 })
         })
     })

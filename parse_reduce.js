@@ -283,6 +283,13 @@ const getFunc = (s, vars) => {
         // Get params
         params = s.slice(s.indexOf('parameter')).split('parameter').slice(1).map(str => {
             let parsed = splitAndRun(expression, str, vars);
+
+            // If function
+            if (str.indexOf('function') < 5 && str.indexOf('function') > -1) {
+                console.log('is Functions', str)
+                return parsed;
+            }
+            // else
             return parsed();
         });
         to = s.indexOf('parameter');
