@@ -83,5 +83,28 @@ describe('RegStat', () => {
                     expect(response).to.equal(-50);
                 })
         })
+        it('should be able to filter', () => {
+            let rs = new RegStat();
+            rs.bearer = 'we';
+            rs.callApi = () => new Promise(res => res({transaction_list: [{total: -200}, {total: 100}, {total: 50}]}));
+            
+            return rs.expression({expression: {stringValue: 'run filter . transaction_list parameter function do total . 0 . args >= 0'}})
+                .then(response => {
+                    expect(response.length).to.equal(2);
+                }).catch(e => {expect(1).to.equal(0);throw e;});
+        })
+        it('should be able to filter and reduce', () => {
+            let rs = new RegStat();
+            rs.bearer = 'we';
+            rs.callApi = () => new Promise(res => res({transaction_list: [{total: -200}, {total: 100}, {total: 50}]}));
+            
+            return rs.expression({expression: {stringValue: 'remember run filter . transaction_list parameter function do total . 0 . args >= 0 as income'}})
+                .then(() => 
+                    rs.expression({expression: {stringValue: 'run reduce . income parameter function do 0 . args + total . 1 . args parameter 0'}})
+                )
+                .then(response => {
+                    expect(response).to.equal(150);
+                }).catch(e => {console.error(e);expect(1).to.equal(0);});
+        })
     })
 })
