@@ -162,8 +162,6 @@ const expression = (s, vars) => {
 
     // TODO: Add function to parse numbers
 
-    if (this[s] !== undefined) // REMOVE NOT SAFE, it can refer to environement variables...
-        return () => this[s];
     if (s === 'arguments' || s === 'args')
         return args => args;
 

@@ -70,4 +70,4 @@ Since some things are not left oriented it can be ambiguous so try to save vars 
 
 ### Examples
 
-See test folder for examples on expressions you can use. 
+See test folder for examples on expressions you can use.
