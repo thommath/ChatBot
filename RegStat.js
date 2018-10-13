@@ -70,7 +70,7 @@ class RegStat {
                         data.transaction_list = data.transaction_list.map(e => Object.assign(e, {total: Number.parseFloat(e.total)}))
 
                     this.env.setVars(data);
-                    console.log('using variables: ', this.env.getVars());
+                    console.log('using variables: ', Object.keys(this.env.getVars()));
 
                     let exp = this.env.getFunction(expression.stringValue);
                     

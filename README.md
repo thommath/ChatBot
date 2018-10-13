@@ -48,9 +48,9 @@ expression :=
     <expression> if <condition> else <expression> | 
     run <expression> {parameter <expression>}| 
     <expression> <op> <expression> | 
-    <list> | 
-    property | 
-    number | 
+    <list> |
+    property |
+    number |
     <var>
 
 list := [] | [<listItem>]
