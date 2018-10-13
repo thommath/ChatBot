@@ -61,24 +61,28 @@ class RegStat {
         }
 
         console.log('expression: ', expression);
-
-        return this.callApi('transaction')
-            .then(data =>
-                {
-                    if (data.transaction_list)
-                        // TODO convert all number fields to int
-                        data.transaction_list = data.transaction_list.map(e => Object.assign(e, {total: Number.parseFloat(e.total)}))
-
-                    this.env.setVars(data);
-                    console.log('using variables: ', Object.keys(this.env.getVars()));
-
-                    let exp = this.env.getFunction(expression.stringValue);
-                    
-                    if (typeof(exp) == 'function')
-                        return exp();
-                    return exp;
-                }
-            );
+        try {
+            return this.callApi('transaction')
+                .then(data =>
+                    {
+                        if (data.transaction_list)
+                            // TODO convert all number fields to int
+                            data.transaction_list = data.transaction_list.map(e => Object.assign(e, {total: Number.parseFloat(e.total)}))
+    
+                        this.env.setVars(data);
+                        console.log('using variables: ', Object.keys(this.env.getVars()));
+    
+                        let exp = this.env.getFunction(expression.stringValue);
+                        
+                        if (typeof(exp) == 'function')
+                            return exp();
+                        return exp;
+                    }
+                );
+        } catch (e) {
+            console.error(e);
+            return new Promise(res => res(e));
+        }
     }
 
     callApi(path) {
