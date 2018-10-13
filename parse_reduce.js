@@ -82,7 +82,7 @@ const cleanString = s => {
     return s;
 }
 const splitAndRun = (f, s, vars, from, to) => {
-    console.log('running: ', s.slice(from, to), 'on', f.name);
+    // console.log('running: ', s.slice(from, to), 'on', f.name);
     return f(cleanString(s.slice(from, to)), vars)
 };
 
@@ -203,12 +203,12 @@ const parseFunction = (s, vars) => {
 
     
     return function (...args) {
-        console.log('arguments in to parseFunction', args);
-        console.log('string to parse:', s.slice(doIndex+3))
+        // console.log('arguments in to parseFunction', args);
+        // console.log('string to parse:', s.slice(doIndex+3))
         let func = expression(s.slice(doIndex+3), vars);
         if(!func)
             throw "Expression is not an function"
-        console.log('f', func.toString(), func)
+        // console.log('f', func.toString(), func)
         return func(args);
     }
 }
@@ -286,7 +286,7 @@ const getFunc = (s, vars) => {
 
             // If function
             if (str.indexOf('function') < 5 && str.indexOf('function') > -1) {
-                console.log('is Functions', str)
+                // console.log('is Functions', str)
                 return parsed;
             }
             // else
@@ -312,7 +312,7 @@ const getFunc = (s, vars) => {
         // func = func();
     }
 
-    console.log('applying ', func, 'on', context, 'with', params)
+    // console.log('applying ', func, 'on', context, 'with', params)
 
     return func.apply(
         context,
@@ -439,7 +439,7 @@ const parseOperator = (s, vars) => {
         //     splitAndRun(expression, s, vars, 0, index),
         //     splitAndRun(expression, s, vars, index+1)
         // ))
-        console.log('arguments on operator', args)
+        // console.log('arguments on operator', args)
         return operator(s[index])
         (
             splitAndRun(expression, s, vars, 0, index) (args),

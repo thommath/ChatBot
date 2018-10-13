@@ -60,6 +60,8 @@ class RegStat {
             return this.authenticate();
         }
 
+        console.log('expression: ', expression);
+
         return this.callApi('transaction')
             .then(data =>
                 {
@@ -68,6 +70,7 @@ class RegStat {
                         data.transaction_list = data.transaction_list.map(e => Object.assign(e, {total: Number.parseFloat(e.total)}))
 
                     this.env.setVars(data);
+                    console.log('using variables: ', this.env.getVars());
 
                     let exp = this.env.getFunction(expression.stringValue);
                     
