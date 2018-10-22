@@ -126,7 +126,28 @@ describe('RegStat', () => {
             return rs.expression({expression: {stringValue: 'remember filter . transaction_list parameter function do total . 0 . args >= 0 as income'}})
                 .then(response => {
                     expect(typeof(response)).to.include('function');
-                }).catch(e => {console.error(e);expect(1).to.equal(0);});
+                });
         })
+        it('should run load', () => {
+            let rs = new RegStat();
+            rs.bearer = 'we';
+            rs.callApi = () => new Promise(res => res({transaction_list: [{total: -200}, {total: 100}, {total: 50}]}));
+            
+            return rs.expression({expression: {stringValue: 'run load'}})
+                .then(response => {
+                    expect(response).to.include('error');
+                });
+        })
+        it('should run save', () => {
+            let rs = new RegStat();
+            rs.bearer = 'we';
+            rs.callApi = () => new Promise(res => res({transaction_list: [{total: -200}, {total: 100}, {total: 50}]}));
+            
+            return rs.expression({expression: {stringValue: 'run save'}})
+                .then(response => {
+                    expect(response).to.include('error');
+                });
+        })
+        
     })
 })

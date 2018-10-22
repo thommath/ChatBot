@@ -9,7 +9,10 @@ class RegStat {
         this.client_secret = process.env.REGSTAT_CLIENT_SECRET;
         this.client_id = process.env.REGSTAT_CLIENT_ID;
         this.sessionId = sessionId;
-        this.env = new parse_reduce.Environement();
+        this.env = new parse_reduce.Environement({
+            'load': this.load(this),
+            'save': this.save,
+        });
     }
 
     authenticate() {
@@ -76,6 +79,7 @@ class RegStat {
                         try {
                             return exp();
                         } catch (error) {
+                            console.log(error)
                             return 'Function can not be run alone';
                         }
                     }
@@ -100,27 +104,33 @@ class RegStat {
         return `Thank you, I'll remember that!`;
     }
 
-    save() {
-        if (!this.bearer) {
-            return this.authenticate();
-        }
+    save(_) {
+        return (lib = 'default') => {
+            if (!_) 
+                _ = this;
+            if (!_.bearer) 
+                return _.authenticate();
 
-        return this.callApi('user')
-            .then(data =>
-                db.save(data.user.email, this.env.getVars())
-            ).then(() => 'Success')
-            .catch((err) => {console.error(err); return 'error'});
+            return _.callApi('user')
+                .then(data =>
+                    db.save(data.user.email, _.env.getVars(), lib)
+                ).then(() => 'Success')
+                .catch((err) => {console.error(err); return 'error'});
+        }
     }
-    load() {
-        if (!this.bearer) {
-            return this.authenticate();
-        }
+    load(_) {
+        return (lib = 'default') => {
+            if (!_)
+                _ = this;
+            if (!_.bearer)
+                return _.authenticate();
 
-        return this.callApi('user')
-            .then(data =>
-                db.load(data.user.email)
-            ).then((res) => {this.env.setVars(res); return 'Success'})
-            .catch((err) => {console.error(err); return 'error'});
+            return _.callApi('user')
+                .then(data =>
+                    db.load(data.user.email, lib)
+                ).then((res) => {_.env.setVars(res); return 'Success'})
+                .catch((err) => {console.error(err); return 'error'});
+        }
     }
 }
 

@@ -27,14 +27,14 @@ exports.close = function(client) {
     client.close();
 }
 
-exports.save = function(id, data) {
+exports.save = function(id, data, lib) {
     return exports.getdb().then(({client, db}) => {
         // Get the documents collection
         const collection = db.collection('user');
         // Insert some documents
         return new Promise((res, rej) => {
             collection.insert({
-                id, data
+                id, data, lib
             }, function(err, result) {
                 client.close();
                 if (err !== null)
@@ -46,13 +46,13 @@ exports.save = function(id, data) {
     })
 }
 
-exports.load = function(id) {
+exports.load = function(id, lib) {
     return exports.getdb().then(({client, db}) => {
         // Get the documents collection
         const collection = db.collection('user');
         // Insert some documents
         return new Promise((res, rej) => {
-            collection.find({id}, function(err, result) {
+            collection.find({id, lib}, function(err, result) {
                 client.close();
                 if (err !== null)
                     rej(err)
