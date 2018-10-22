@@ -8,6 +8,26 @@ const { RegStat } = require('./components/RegStat');
 
 var { intentToAction } = require('./intentToAction');
 
+
+// Session handling
+var session = require("express-session")({
+    secret: process.env.SECRET,
+    resave: true,
+    saveUninitialized: true
+});
+var sharedsession = require("express-socket.io-session");
+ 
+// Use express-session middleware for express
+app.use(session);
+ 
+// Use shared session middleware for socket.io
+// setting autoSave:true
+io.use(sharedsession(session, {
+    autoSave:true
+})); 
+// Session handeling done
+
+
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/html/index.html');
 });

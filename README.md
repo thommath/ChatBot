@@ -10,6 +10,7 @@ The variables needed are:
     REGSTAT_CLIENT_ID - auth to regstat
     GOOGLE_APPLICATION_CREDENTIALS - access to dialogflow
     mongodburl - url with authentication to db
+    SECRET - random secret string
 
 ### Structure
 
