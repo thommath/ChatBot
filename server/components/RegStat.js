@@ -5,7 +5,6 @@ const db = require('./mongodb');
 
 class RegStat {
     constructor(sessionId) {
-//        this.bearer = 'Bearer 323031382D30382D31332031353A31363A35362E3030373434392B30303A3030736C216A2126682D6F34356565657A40266C5E7873707038623879266C673D32387729733D626C37266A282869696F636469';
         this.url = 'https://regstat.net';
         this.client_secret = process.env.REGSTAT_CLIENT_SECRET;
         this.client_id = process.env.REGSTAT_CLIENT_ID;
@@ -73,11 +72,16 @@ class RegStat {
 
                     let exp = this.env.getFunction(expression.stringValue);
                     
-                    if (typeof(exp) == 'function')
-                        return exp();
+                    if (typeof(exp) == 'function') {
+                        try {
+                            return exp();
+                        } catch (error) {
+                            return 'Function can not be run alone';
+                        }
+                    }
                     return exp;
                 }
-            ).catch(e => {console.error(e); return e;});
+            ).catch(e => {console.error(e); return e.message;});
     }
 
     callApi(path) {
