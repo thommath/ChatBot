@@ -3,7 +3,7 @@ var expect = require('chai').expect
   , foo = 'bar'
   , beverages = { tea: [ 'chai', 'matcha', 'oolong' ] };
 
-const { RegStat } = require('../RegStat');
+const { RegStat } = require('../server/components/RegStat');
 
 describe('RegStat', () => {
     describe('expression', () => {
@@ -115,6 +115,16 @@ describe('RegStat', () => {
             return rs.expression({expression: {stringValue: 'run run run 0'}})
                 .then(response => {
                     expect(response).to.include('is not a function');
+                }).catch(e => {console.error(e);expect(1).to.equal(0);});
+        })
+        it('should catch exceptions in expression function', () => {
+            let rs = new RegStat();
+            rs.bearer = 'we';
+            rs.callApi = () => new Promise(res => res({transaction_list: [{total: -200}, {total: 100}, {total: 50}]}));
+            
+            return rs.expression({expression: {stringValue: 'remember filter . transaction_list parameter function do total . 0 . args >= 0 as income'}})
+                .then(response => {
+                    expect(response).to.include('object tested must');
                 }).catch(e => {console.error(e);expect(1).to.equal(0);});
         })
     })

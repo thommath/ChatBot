@@ -1,6 +1,6 @@
 const request = require('request-promise-native');
 const sha256 = require('sha256');
-const parse_reduce = require('./parse_reduce');
+const parse_reduce = require('../englang/englang');
 const db = require('./mongodb');
 
 class RegStat {
@@ -15,7 +15,7 @@ class RegStat {
 
     authenticate() {
         this.bearer = 'Bearer ' + sha256(this.client_secret + this.sessionId);
-        return `Before you do that, plase login here: ${this.url}/oauth/?client_id=${this.client_id}&session_id=${this.sessionId}`;
+        return `Before you do that, please login here: ${this.url}/oauth/?client_id=${this.client_id}&session_id=${this.sessionId}`;
     }
 
     defaultWelcomeIntent() {
@@ -77,7 +77,7 @@ class RegStat {
                         return exp();
                     return exp;
                 }
-            ).catch(e => {console.error(e); return e.message;});
+            ).catch(e => {console.error(e); return e;});
     }
 
     callApi(path) {

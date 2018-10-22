@@ -1,7 +1,4 @@
 
-
-
-
 class Environement{
 
     constructor(vars = {}) {
@@ -353,14 +350,15 @@ const getConditionMerger = s => {
     let conditionMerger = s[getConditionMergerIndex(s)];
     if (conditionMerger == '&')
         return (a, b) => a && b;
-    return (a, b) => a || b;    
+    console.log('condition: ', conditionMerger)
+    return (a, b) => a || b;
 }
-const getCondition = (s, vars) => {
-    return getConditionMerger(s) (
-        splitAndRun(condition, s, vars, 0, getConditionMergerIndex(s)-1), 
-        splitAndRun(condition, s, vars, getConditionMergerIndex(s) + 3)
-    );
-} 
+const getCondition = (s, vars) => 
+    (args) => 
+        getConditionMerger(s) (
+            splitAndRun(condition, s, vars, 0, getConditionMergerIndex(s))(args), 
+            splitAndRun(condition, s, vars, getConditionMergerIndex(s) + 2)(args)
+        );
 
 const condition = (s, vars) => {
     if (hasConditionMerger(s))

@@ -3,7 +3,7 @@ var expect = require('chai').expect
   , foo = 'bar'
   , beverages = { tea: [ 'chai', 'matcha', 'oolong' ] };
 
-const { operator, compare, parseIf, condition, magiduse, expression, Environement } = require('../parse_reduce');
+const { operator, compare, parseIf, condition, magiduse, expression, Environement } = require('../server/englang/englang');
 
 
   describe('operator', () => {
@@ -98,6 +98,22 @@ describe('expression', () => {
         expect(func()).to.equal(2);
         func = expression('1 if 0 else 0 if 1 else 2');
         expect(func()).to.equal(0);
+    })
+    it('should handle and and or', () => {
+        let func = expression('1 if 1 && 1 else 2');
+        expect(func()).to.equal(1);
+        func = expression('1 if 1 && 0 else 2');
+        expect(func()).to.equal(2);
+        func = expression('1 if 0 && 0 else 2');
+        expect(func()).to.equal(2);
+        func = expression('1 if 0 || 0 else 2');
+        expect(func()).to.equal(2);
+        func = expression('1 if 1 || 1 else 2');
+        expect(func()).to.equal(1);
+        func = expression('1 if 1 || 0 else 2');
+        expect(func()).to.equal(1);
+        func = expression('1 if 0 || 1 else 2');
+        expect(func()).to.equal(1);
     })
     it('should check for nested if and handle it', () => {
         let func = expression('1 if 0 if 1 else 1 else 0 if 0 else 2');
