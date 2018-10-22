@@ -22,7 +22,13 @@
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
         $(function () {
-            var socket = io();
+          // https://socket.io/docs/client-api/#With-websocket-transport-only
+            var socket = io({
+                transports: ['websocket']
+              });
+              socket.on('reconnect_attempt', () => {
+                socket.io.opts.transports = ['polling', 'websocket'];
+              });
             $('form').submit(function(){
                 socket.emit('chat message', $('#m').val());
                 $('#messages').append($('<li>').text($('#m').val()));
